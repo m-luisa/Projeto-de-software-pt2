@@ -395,8 +395,14 @@ public class GBIFApiClient implements SpeciesDataSource {
                 double lon = Double.parseDouble(lonStr);
                 Date data = (dataStr != null) ? parseData(dataStr) : null;
 
-                Occurrence occ = new Occurrence(data, lat, lon, especie);
-                occ.setHorarioConhecido(possuiHorario(dataStr));
+                // Builder: monta a Occurrence em um só encadeamento, sem o
+                // passo extra de chamar o setter depois da criação.
+                Occurrence occ = new Occurrence.Builder()
+                        .especie(especie)
+                        .data(data)
+                        .coordenadas(lat, lon)
+                        .horarioConhecido(possuiHorario(dataStr))
+                        .build();
                 resultado.ocorrencias.add(occ);
 
             } catch (IllegalArgumentException e) {
