@@ -22,12 +22,8 @@ import java.text.SimpleDateFormat;
 
 public class GBIFApiClient implements SpeciesDataSource {
 
-    // Código do idioma (ISO 639-2/T) usado para filtrar os nomes populares
-    // retornados pela API do GBIF. "por" = português.
     private static final String IDIOMA_PADRAO = "por";
 
-    // Quantidade de nomes populares buscados por espécie antes do filtro por
-    // idioma (ver comentário em fetchVernacularNamesByLanguage).
     private static final int LIMITE_NOMES_POPULARES = 300;
 
     private final HttpClient client;
@@ -78,9 +74,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         }
     }
 
-    // GBIFApiClient sozinho não enriquece com fonte externa nenhuma — quem faz
-    // isso é o EnrichedSpeciesDataSource, que envolve este client. Aqui as duas
-    // buscas já são idênticas.
     @Override
     public Species fetchSpeciesSemEnriquecimento(int speciesId) {
         return fetchSpecies(speciesId);
@@ -102,13 +95,11 @@ public class GBIFApiClient implements SpeciesDataSource {
                 return extractJsonField(response.body(), "category");
             }
         } catch (Exception e) {
-            // Ignorado, apenas retorna null
         }
 
         return null;
     }
 
-    // Busca ocorrências reais de uma espécie pelo nome científico.
     @Override
     public List<String> fetchRawOccurrencesByScientificName(String scientificName, int limit) {
         String encoded = URLEncoder.encode(scientificName, StandardCharsets.UTF_8);
@@ -136,26 +127,16 @@ public class GBIFApiClient implements SpeciesDataSource {
         }
     }
 
-    // ---- RF7 [A]: busca sob demanda, paginação resolvida aqui dentro ----
- 
-    // Cada sessão guarda sua própria função de busca de página (offset ->
-    // resultados), então nada fora desta classe precisa saber como montar a
-    // URL/query do GBIF. A sessão só busca uma página nova quando realmente
-    // precisa (nextPage()); páginas já vistas ficam em cache nela mesma.
-    // Busca restrita a nome popular/vernacular (qField=VERNACULAR).
     @Override
     public SearchSession searchByVernacular(String termo, int pageSize) {
         return new GBIFSearchSession(offset -> search(termo, "VERNACULAR", offset, pageSize), pageSize);
     }
 
-    // Busca geral (nome científico ou texto livre, sem restringir campo).
-    @Override 
+    @Override
     public SearchSession searchByScientific(String termo, int pageSize) {
         return new GBIFSearchSession(offset -> search(termo, null, offset, pageSize), pageSize);
     }
 
-    // Método interno (mantém offset/limit) usado pelas sessões acima.
-    // Continua privado: nada fora desta classe deve gerenciar paginação da API.
     private List<SearchResult> search(String query, String qField, int offset, int limit) {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         String url = "https://api.gbif.org/v1/species/search?q=" + encodedQuery
@@ -201,15 +182,6 @@ public class GBIFApiClient implements SpeciesDataSource {
                 int taxonKey = Integer.parseInt(keyStr);
                 List<String> vernacularNames = fetchVernacularNamesByLanguage(taxonKey, IDIOMA_PADRAO);
 
-                // O endpoint do GBIF, mesmo restrito a qField=VERNACULAR, às vezes
-                // devolve correspondências "fuzzy" sem relação real com o termo
-                // buscado (ex.: buscar "panthera leo" por VERNACULAR pode retornar
-                // resultados cujos nomes populares em português não têm nada a ver
-                // com o termo). Isso fazia a busca por nome científico nunca cair
-                // no fallback de searchByScientific, pois a página "vernacular"
-                // nunca vinha vazia. Aqui descartamos esses falsos positivos,
-                // exigindo que o termo buscado realmente apareça em algum nome
-                // popular retornado.
                 if ("VERNACULAR".equals(qField) && !correspondeAoTermoBuscado(vernacularNames, query)) {
                     continue;
                 }
@@ -224,9 +196,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         return deduplicateByScientificName(parsed);
     }
 
-    // Remove nomes científicos repetidos dentro da mesma página de resultados.
-    // Quando há mais de um resultado com o mesmo nome científico, mantém apenas
-    // aquele que possui o maior número de nomes populares associados.
     private List<SearchResult> deduplicateByScientificName(List<SearchResult> results) {
         Map<String, SearchResult> melhoresPorNome = new LinkedHashMap<>();
 
@@ -243,12 +212,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         return new ArrayList<>(melhoresPorNome.values());
     }
 
-    // Busca os nomes populares de uma espécie e filtra por idioma no lado do
-    // cliente. O parâmetro "language" da API do GBIF nesse endpoint não filtra
-    // de fato os resultados (comportamento confirmado empiricamente — a API
-    // devolve a mesma lista completa independente do valor enviado), então
-    // buscamos um limite alto de nomes e filtramos aqui pelo campo "language"
-    // de cada item, comparando com o código ISO 639-2 esperado (ex.: "por").
     private List<String> fetchVernacularNamesByLanguage(int taxonKey, String language) {
         List<String> names = new ArrayList<>();
         String url = "https://api.gbif.org/v1/species/" + taxonKey
@@ -277,17 +240,11 @@ public class GBIFApiClient implements SpeciesDataSource {
                 }
             }
         } catch (Exception e) {
-            // Ignorado — em caso de falha, retorna lista vazia para essa espécie
-            // sem interromper a listagem dos demais resultados.
         }
 
         return names;
     }
 
-    // Alguns nomes populares vêm da API do GBIF corrompidos por problema de
-    // encoding/charset, aparecendo como sequências de "?" (ex.: "????????").
-    // Esse método descarta esses casos para que não poluam a listagem nem
-    // interfiram na escolha do resultado com mais nomes populares.
     private boolean isNomePopularValido(String nome) {
         if (nome == null) {
             return false;
@@ -301,13 +258,9 @@ public class GBIFApiClient implements SpeciesDataSource {
                 return true;
             }
         }
-        // Chegou aqui, significa que a string é composta só por '?' (e/ou espaços).
         return false;
     }
 
-    // Remove acentuação e normaliza para minúsculas/tokens simples, para permitir
-    // comparação de texto tolerante a maiúsculas/acentos entre o termo buscado
-    // pelo usuário e os nomes populares retornados pela API.
     private String normalizar(String texto) {
         if (texto == null) {
             return "";
@@ -317,10 +270,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         return semAcentos.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
     }
 
-    // Verifica se o termo buscado pelo usuário de fato aparece em algum dos
-    // nomes populares retornados (todas as palavras do termo precisam constar
-    // em um mesmo nome popular). Usado para filtrar falsos positivos de busca
-    // por VERNACULAR — ver comentário em search().
     private boolean correspondeAoTermoBuscado(List<String> nomesPopulares, String termoBuscado) {
         String termoNormalizado = normalizar(termoBuscado);
         if (termoNormalizado.isEmpty()) {
@@ -344,9 +293,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         return false;
     }
 
-    // O eventDate do GBIF às vezes vem só com data (ex.: "2026-01-01"),
-    // sem hora nenhuma — indica que a fonte original não registrou o
-    // horário, não que o evento ocorreu à meia-noite.
     private boolean possuiHorario(String texto) {
         if (texto == null || texto.isEmpty()) {
             return false;
@@ -360,12 +306,10 @@ public class GBIFApiClient implements SpeciesDataSource {
             return null;
         }
 
-        // eventDate às vezes vem como intervalo ("2023-05-12/2023-05-13"); usamos a data inicial.
         String primeira = texto.split("/")[0].trim();
 
         try {
             if (primeira.length() > 10) {
-                // Tem componente de hora junto (ex.: 2023-05-12T14:30:00)
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                 return sdf.parse(primeira.substring(0, Math.min(19, primeira.length())));
             } else {
@@ -395,8 +339,12 @@ public class GBIFApiClient implements SpeciesDataSource {
                 double lon = Double.parseDouble(lonStr);
                 Date data = (dataStr != null) ? parseData(dataStr) : null;
 
-                Occurrence occ = new Occurrence(data, lat, lon, especie);
-                occ.setHorarioConhecido(possuiHorario(dataStr));
+                Occurrence occ = new Occurrence.Builder()
+                        .especie(especie)
+                        .data(data)
+                        .coordenadas(lat, lon)
+                        .horarioConhecido(possuiHorario(dataStr))
+                        .build();
                 resultado.ocorrencias.add(occ);
 
             } catch (IllegalArgumentException e) {
@@ -407,8 +355,6 @@ public class GBIFApiClient implements SpeciesDataSource {
         return resultado;
     }
 
-    // Extrai cada objeto {...} de dentro do array "results": [...] do JSON,
-    // já que não estamos usando uma lib de JSON de verdade.
     private List<String> extractResultObjects(String json) {
         List<String> objects = new ArrayList<>();
 
@@ -455,10 +401,6 @@ public class GBIFApiClient implements SpeciesDataSource {
     }
 
     private String extractJsonNumericField(String json, String fieldName) {
-        // Aceita inteiros, negativos e decimais (ex: -23.5505), já que
-        // decimalLatitude/decimalLongitude quase sempre têm sinal e casas
-        // decimais. O padrão antigo (\\d+) capturava só a parte inteira
-        // positiva, descartando o sinal e o restante do número.
         Pattern pattern = Pattern.compile("\"" + fieldName + "\":\\s*(-?\\d+(?:\\.\\d+)?)");
         Matcher matcher = pattern.matcher(json);
         if (matcher.find()) {
