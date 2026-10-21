@@ -163,7 +163,7 @@ classDiagram
     ConservationReport ..> ConservationStatus : agrupa por
 ```
 
-## 2. Camada de acesso a dados (`api`) e `Main`
+## 2. Camada de acesso a dados (`api`), fachada (`facade`) e `Main`
 
 ```mermaid
 classDiagram
@@ -200,15 +200,21 @@ classDiagram
         +importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
     }
 
-    class EnrichedSpeciesDataSource {
-        -gbif : SpeciesDataSource
-        -wikidata : WikiDataClient
+    class DecoradorDeFonteDeEspecies {
+        <<abstract>>
+        #fonte : SpeciesDataSource
+        #DecoradorDeFonteDeEspecies(fonte: SpeciesDataSource)
         +fetchSpecies(speciesId: int) Species
         +fetchSpeciesSemEnriquecimento(speciesId: int) Species
         +searchByVernacular(termo: String, pageSize: int) SearchSession
         +searchByScientific(termo: String, pageSize: int) SearchSession
         +fetchRawOccurrencesByScientificName(scientificName: String, limit: int) List~String~
         +importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
+    }
+
+    class EnrichedSpeciesDataSource {
+        -wikidata : WikiDataClient
+        +fetchSpecies(speciesId: int) Species
         -enrich(base: Species, traits: WikiDataTraits) Species
     }
 
@@ -246,6 +252,18 @@ classDiagram
         +descartados : int
     }
 
+    class FachadaBiodiversidade {
+        -TAMANHO_PAGINA_LOTE : int$
+        -LIMITE_OCORRENCIAS_POR_ESPECIE : int$
+        -fonte : SpeciesDataSource
+        +buscarEspecies(termo: String, tamanhoPagina: int) SearchSession
+        +buscarTodasAsCorrespondencias(termo: String) List~SearchResult~
+        +obterEspecie(chave: int) Species
+        +ocorrenciasDaEspecie(especie: Species) ImportResult
+        +ocorrenciasDasCorrespondencias(correspondencias: List~SearchResult~) ImportResult
+        +agruparPorStatus(especies: List~Species~) Map
+    }
+
     class Main {
         +main(args: String[])$ void
     }
@@ -258,10 +276,11 @@ classDiagram
     class ConservationReport
 
     SpeciesDataSource <|.. GBIFApiClient
-    SpeciesDataSource <|.. EnrichedSpeciesDataSource
+    SpeciesDataSource <|.. DecoradorDeFonteDeEspecies
+    DecoradorDeFonteDeEspecies <|-- EnrichedSpeciesDataSource
     SearchSession <|.. GBIFSearchSession
 
-    EnrichedSpeciesDataSource o--> SpeciesDataSource : gbif
+    DecoradorDeFonteDeEspecies o--> SpeciesDataSource : fonte
     EnrichedSpeciesDataSource o--> WikiDataClient : wikidata
     WikiDataClient ..> WikiDataTraits : creates
     EnrichedSpeciesDataSource ..> WikiDataTraits : usa
@@ -276,11 +295,16 @@ classDiagram
     SearchSession ..> SearchResult
     ImportResult o--> Occurrence : ocorrencias
 
+    FachadaBiodiversidade o--> SpeciesDataSource : fonte
+    FachadaBiodiversidade ..> ConservationReport : agrupa
+    FachadaBiodiversidade ..> SearchSession
+    FachadaBiodiversidade ..> ImportResult
+
+    Main ..> FachadaBiodiversidade : usa
     Main ..> SpeciesDataSource
     Main ..> EnrichedSpeciesDataSource : instancia
     Main ..> GBIFApiClient : instancia
     Main ..> WikiDataClient : instancia
-    Main ..> ConservationReport
 ```
 
 
@@ -320,3 +344,59 @@ Atividade: identificar onde padrões criacionais devem ser aplicados e aplicá-l
 ## Requisitos funcionais preservados
 
 Os padrões não alteram o comportamento observável das consultas, ocorrências e relatórios. As validações de `Species` (RF1) e `Occurrence` (RF2), a normalização de status (RF3), as descrições por categoria (RF4 e RF5), a paginação sob demanda (RF7 e RF10) e o descarte tolerante de registros inválidos em lote (RF9) continuam com o mesmo comportamento.
+
+---
+
+# Padrões Estruturais aplicados
+
+Atividade: identificar onde padrões estruturais (Adapter, Decorator, Proxy, Facade e Composite) devem ser aplicados e aplicá-los, justificando aqui no README.
+
+## Facade: `FachadaBiodiversidade`
+
+| Onde | Sinal de alerta que havia no código |
+|---|---|
+| `facade/FachadaBiodiversidade`, usada pelo `Main` | O `Main` combinava à mão quatro peças do subsistema (busca, paginação, ocorrências, relatório); a regra "popular, senão científico" estava escrita três vezes |
+
+**Antes.** O `Main` misturava interface com o usuário (menus, impressão) e orquestração do subsistema. A regra "tenta o nome popular e, se não houver resultado, tenta o científico" aparecia em `resolverEspecie`, `resolverEspecies` e `listarOcorrenciasPorNome`. O fluxo "para cada espécie encontrada, buscar ocorrências brutas e converter" e o método `collectAllPages` também viviam no `Main`.
+
+**Agora.** A fachada expõe poucos métodos com nomes de intenção: `buscarEspecies`, `buscarTodasAsCorrespondencias`, `obterEspecie`, `ocorrenciasDaEspecie`, `ocorrenciasDasCorrespondencias` e `agruparPorStatus`. O `Main` só pergunta ao usuário, chama a fachada e imprime. Foram movidos para a fachada: o fallback popular → científico (três cópias viraram uma), `collectAllPages`, o laço por espécie do fluxo de ocorrências e as constantes de processamento em lote (`TAMANHO_PAGINA_LOTE`, `LIMITE_OCORRENCIAS_POR_ESPECIE`). O tamanho da página de tela (`PAGINA`) continua no `Main`, por ser decisão de apresentação.
+
+O `Main` continua sendo o único lugar que instancia as classes concretas, e entrega a fonte de dados à fachada:
+
+```java
+SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
+```
+
+**Por quê.** O Facade serve para dar uma interface simples a um subsistema com várias peças. Aqui o ganho é concreto: a regra de fallback agora muda em um lugar só, e o `Main` deixa de saber como `SpeciesDataSource`, `SearchSession`, `ImportResult` e `ConservationReport` se combinam. A fachada recebe a fonte pelo construtor e depende só da interface `SpeciesDataSource` (RF7 [IF]).
+
+**Custo.** Uma classe e um nível de indireção a mais. A fachada não bloqueia o subsistema (as classes continuam públicas) e `SearchSession` e `ImportResult` continuam sendo devolvidos como tipos de retorno, porque a fachada simplifica o uso e não replica esses tipos.
+
+**Requisitos funcionais preservados.** O contrato `SpeciesDataSource` não mudou, e os fluxos e as mensagens das opções 1, 2 e 3 do menu continuam os mesmos. As validações de `Species` (RF1) e `Occurrence` (RF2), a normalização de status (RF3), as descrições por categoria (RF4 e RF5) e o relatório agnóstico a tipo (RF6) não foram tocados. A paginação sob demanda (RF7 e RF10) continua nas `SearchSession`, que a fachada apenas repassa, e o descarte tolerante de registros inválidos (RF9) continua em `importarOcorrencias`.
+
+## Decorator: `DecoradorDeFonteDeEspecies` e `EnrichedSpeciesDataSource`
+
+| Onde | Sinal de alerta que havia no código |
+|---|---|
+| `api/DecoradorDeFonteDeEspecies` (base) e `EnrichedSpeciesDataSource` | Já existia um "embrulho" de `SpeciesDataSource`, mas ele reescrevia à mão cinco métodos que só repassavam a chamada; um segundo embrulho repetiria tudo |
+
+| Papel no padrão | Classe |
+|---|---|
+| Component | `SpeciesDataSource` |
+| ConcreteComponent | `GBIFApiClient` |
+| Decorator | `DecoradorDeFonteDeEspecies` (implementa a interface **e** guarda outra `SpeciesDataSource`) |
+| ConcreteDecorator | `EnrichedSpeciesDataSource` |
+
+**Antes.** `EnrichedSpeciesDataSource` já implementava `SpeciesDataSource` e guardava um `gbif`, ou seja, já era um decorador na prática. Mas não havia classe base: ele escrevia à mão `searchByVernacular`, `searchByScientific`, `fetchRawOccurrencesByScientificName`, `importarOcorrencias` e `fetchSpeciesSemEnriquecimento`, que só repassavam a chamada.
+
+**Agora.** `DecoradorDeFonteDeEspecies` concentra o repasse de todos os métodos para a fonte "de dentro". `EnrichedSpeciesDataSource` herda dela e sobrescreve apenas `fetchSpecies`, o único método cujo resultado muda (busca os traits no Wikidata e reconstrói a espécie). `fetchSpeciesSemEnriquecimento` passou a ser herdado: ele pede à fonte de dentro a versão sem enriquecimento (antes chamava `gbif.fetchSpecies`). Para o `GBIFApiClient` o resultado é o mesmo, e a nova forma continua correta se houver outro decorador no meio da pilha. O construtor manteve a mesma assinatura, então o `Main` não precisou mudar:
+
+```java
+SpeciesDataSource client = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+```
+
+**Por quê.** O Decorator acrescenta uma responsabilidade (enriquecer com Wikidata) sem alterar o `GBIFApiClient` nem quem usa a interface. Como o decorador também é um `SpeciesDataSource`, ele pode ser empilhado com outros e trocado na montagem do `Main`, sem `if` espalhado no código.
+
+**Custo.** Uma classe abstrata a mais. Hoje existe um único decorador concreto, então o ganho imediato é remover o código de repasse repetido e deixar o `EnrichedSpeciesDataSource` focado só no que ele muda; a classe base passa a compensar de fato quando surgir um segundo decorador (por exemplo, um que registre logs ou guarde respostas). Uma mudança de comportamento mínima: passar uma fonte `null` ao construtor agora lança `IllegalArgumentException` na hora, em vez de falhar com `NullPointerException` só no primeiro uso.
+
+**Requisitos funcionais preservados.** O contrato `SpeciesDataSource` não ganhou nem perdeu métodos, e o `Main`, o modelo e o relatório não foram alterados. As buscas, a paginação sob demanda (RF7 e RF10), a importação com descarte tolerante de registros inválidos (RF9) e o enriquecimento da espécie continuam se comportando como antes; `fetchSpeciesSemEnriquecimento` continua sem consultar o Wikidata.
