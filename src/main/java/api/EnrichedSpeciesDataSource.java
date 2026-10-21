@@ -1,21 +1,21 @@
 package api;
 
 import model.*;
-import java.util.List;
 
-public class EnrichedSpeciesDataSource implements SpeciesDataSource {
+public class EnrichedSpeciesDataSource extends DecoradorDeFonteDeEspecies {
 
-    private final SpeciesDataSource gbif;
     private final WikiDataClient wikidata;
 
+    // A assinatura do construtor foi mantida: o primeiro parâmetro continua
+    // sendo a fonte base (GBIF), agora guardada pela classe pai em "fonte".
     public EnrichedSpeciesDataSource(SpeciesDataSource gbif, WikiDataClient wikidata) {
-        this.gbif = gbif;
+        super(gbif);
         this.wikidata = wikidata;
     }
 
     @Override
     public Species fetchSpecies(int speciesId) {
-        Species base = gbif.fetchSpecies(speciesId);
+        Species base = fonte.fetchSpecies(speciesId);
         if (base == null) {
             return null;
         }
@@ -23,25 +23,6 @@ public class EnrichedSpeciesDataSource implements SpeciesDataSource {
         return enrich(base, traits);
     }
 
-    // Pula o enriquecimento do Wikidata (e as consultas SPARQL que ele
-    // dispara por espécie) — usado por fluxos que só precisam de dados
-    // básicos do GBIF (ex.: nome científico), sem exibir os traits
-    // enriquecidos.
-    @Override
-    public Species fetchSpeciesSemEnriquecimento(int speciesId) {
-        return gbif.fetchSpecies(speciesId);
-    }
-
-    // Species é imutável, então enriquecer = reconstruir a mesma subclasse
-    // com os traits do Wikidata no lugar dos placeholders "-" do SpeciesFactory.
-    //
-    // Só Insect e Mammal têm um campo específico com correspondência real e
-    // confiável no Wikidata (P2050 wingspan e P9566 diel cycle,
-    // respectivamente). As demais categorias não tinham propriedade própria
-    // (o campo específico anterior era só o habitat duplicado, ou nem era
-    // preenchido de fato — caso de Plant.floweringSeason) e por isso foram
-    // removidas: essas classes hoje carregam só os traits comuns herdados
-    // de Species (habitat/diet/length/mass).
     private Species enrich(Species base, WikiDataTraits traits) {
         int id = base.getId();
         String name = base.getScientificName();
@@ -78,25 +59,4 @@ public class EnrichedSpeciesDataSource implements SpeciesDataSource {
         return valor != null ? valor : "-";
     }
 
-    // --- Wikidata não sabe buscar nem paginar — delega 100% ao GBIF ---
-
-    @Override
-    public SearchSession searchByVernacular(String termo, int pageSize) {
-        return gbif.searchByVernacular(termo, pageSize);
-    }
-
-    @Override
-    public SearchSession searchByScientific(String termo, int pageSize) {
-        return gbif.searchByScientific(termo, pageSize);
-    }
-
-    @Override
-    public List<String> fetchRawOccurrencesByScientificName(String scientificName, int limit) {
-        return gbif.fetchRawOccurrencesByScientificName(scientificName, limit);
-    }
-
-    @Override
-    public ImportResult importarOcorrencias(List<String> jsonsBrutos, Species especie) {
-        return gbif.importarOcorrencias(jsonsBrutos, especie);
-    }
 }
