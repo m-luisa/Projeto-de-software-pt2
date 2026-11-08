@@ -28,6 +28,9 @@ public class Occurrence {
     }
 
     public void setCoordinates(double lat, double lon) {
+        if (Double.isNaN(lat) || Double.isNaN(lon)) {
+            throw new IllegalArgumentException("Coordenadas inválidas (NaN).");
+        }
         if (lat < -90.0 || lat > 90.0) {
             throw new IllegalArgumentException("Latitude inválida (" + lat + "). Deve estar entre -90 e 90.");
         }
