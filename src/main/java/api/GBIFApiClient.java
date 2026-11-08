@@ -301,21 +301,36 @@ public class GBIFApiClient implements SpeciesDataSource {
         return primeira.length() > 10;
     }
 
+    // RF2: o formato é ESTRITO (setLenient(false)), então datas impossíveis como
+    // "2020-13-45" ou "2020-02-31" são recusadas em vez de virarem outra data.
+    // RF9: datas só com ano ("2019") ou ano e mês ("2019-05") são válidas no GBIF
+    // e passam a ser aceitas (viram o 1º dia do período), em vez de descartadas.
     private Date parseData(String texto) {
         if (texto == null || texto.isEmpty()) {
             return null;
         }
 
         String primeira = texto.split("/")[0].trim();
+        String padrao;
+        String valor = primeira;
+
+        if (primeira.length() > 10) {
+            padrao = "yyyy-MM-dd'T'HH:mm:ss";
+            valor = primeira.substring(0, Math.min(19, primeira.length()));
+        } else if (primeira.length() == 10) {
+            padrao = "yyyy-MM-dd";
+        } else if (primeira.length() == 7) {
+            padrao = "yyyy-MM";
+        } else if (primeira.length() == 4) {
+            padrao = "yyyy";
+        } else {
+            throw new IllegalArgumentException("Data de ocorrência em formato inválido: " + texto);
+        }
 
         try {
-            if (primeira.length() > 10) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                return sdf.parse(primeira.substring(0, Math.min(19, primeira.length())));
-            } else {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                return sdf.parse(primeira);
-            }
+            SimpleDateFormat sdf = new SimpleDateFormat(padrao);
+            sdf.setLenient(false);
+            return sdf.parse(valor);
         } catch (ParseException e) {
             throw new IllegalArgumentException("Data de ocorrência em formato inválido: " + texto);
         }
