@@ -3,6 +3,8 @@ import api.EnrichedSpeciesDataSource;
 import api.WikiDataClient; 
 import api.ImportResult;
 import api.SpeciesDataSource;
+import busca.BuscaPorNomeCientifico;
+import busca.BuscaPorNomePopular;
 import facade.FachadaBiodiversidade;
 import model.ConservationStatus;
 import model.Levantamento;
@@ -63,6 +65,10 @@ public class Main {
                 case "3":
                     relatorioConservacaoPorNome(scanner, fachada);
                     break;
+                case "4":
+                    // RF10: escolher o método de busca (padrão Strategy)
+                    fachada = escolherMetodoDeBusca(scanner, fonte, fachada);
+                    break;
                 case "0":
                     running = false;
                     System.out.println("Encerrando...");
@@ -117,6 +123,34 @@ public class Main {
         }
     }
 
+    // RF10 [A]: dois métodos de busca selecionáveis independentemente. A
+    // Main só troca a lista de estratégias da fachada; o resto do programa
+    // não sabe qual método está em uso.
+    private static FachadaBiodiversidade escolherMetodoDeBusca(Scanner scanner, SpeciesDataSource fonte,
+                                                               FachadaBiodiversidade atual) {
+        System.out.println("\nMétodo de busca:");
+        System.out.println("1. Automático (tenta nome popular e, se não achar, nome científico)");
+        System.out.println("2. Só por nome popular (ex.: onça-pintada)");
+        System.out.println("3. Só por nome científico (ex.: Panthera onca)");
+        System.out.print("Escolha: ");
+        String escolha = scanner.nextLine().trim();
+
+        switch (escolha) {
+            case "1":
+                System.out.println("Busca automática ativada.\n");
+                return new FachadaBiodiversidade(fonte);
+            case "2":
+                System.out.println("Busca por nome popular ativada.\n");
+                return new FachadaBiodiversidade(fonte, List.of(new BuscaPorNomePopular()));
+            case "3":
+                System.out.println("Busca por nome científico ativada.\n");
+                return new FachadaBiodiversidade(fonte, List.of(new BuscaPorNomeCientifico()));
+            default:
+                System.out.println("Opção inválida. O método de busca não foi alterado.\n");
+                return atual;
+        }
+    }
+
     private static void exibirMenu() {
         System.out.println("=========================================");
         System.out.println(" SISTEMA DE CONSULTA DE ESPÉCIES - GBIF");
@@ -124,6 +158,7 @@ public class Main {
         System.out.println("1. Consulta geral (buscar espécie por nome)");
         System.out.println("2. Listar ocorrências");
         System.out.println("3. Gerar relatório de conservação");
+        System.out.println("4. Escolher método de busca (automático, nome popular ou nome científico)");
         System.out.println("0. Sair");
         System.out.print("Escolha uma opção: ");
     }
