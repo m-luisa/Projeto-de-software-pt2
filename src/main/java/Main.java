@@ -2,13 +2,16 @@ import api.GBIFApiClient;
 import api.EnrichedSpeciesDataSource;
 import api.WikiDataClient; 
 import api.ImportResult;
-import api.SearchSession;
 import api.SpeciesDataSource;
-import model.ConservationReport;
+import facade.FachadaBiodiversidade;
 import model.ConservationStatus;
+import model.Levantamento;
 import model.Occurrence;
 import model.SearchResult;
 import model.Species;
+import ui.EspecieSelecionada;
+import ui.SelecionadorDeUmaEspecie;
+import ui.SelecionadorDeVariasEspecies;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -22,19 +25,10 @@ import java.util.Scanner;
 
 public class Main {
 
+    // Tamanho da página mostrada na tela. É decisão de apresentação, por isso
+    // continua aqui no Main. As constantes de processamento em lote
+    // (tamanho de página e limite de ocorrências) agora vivem na fachada.
     private static final int PAGINA = 20;
-
-    // por que
-    // Tamanho de página usado quando precisamos buscar TODAS as correspondências
-    // de uma vez (fluxo de ocorrências, que agrega dados de todas as espécies
-    // encontradas). Maior que PAGINA porque, nesse caso, sabemos de antemão que
-    // vamos consumir a lista inteira — não faz sentido usar páginas pequenas
-    // pensadas para exibição em tela.
-    private static final int PAGINA_LOTE = 50;
-
-    // Quantas ocorrências brutas são buscadas por espécie individual antes de
-    // serem validadas/filtradas.
-    private static final int LIMITE_OCORRENCIAS_POR_ESPECIE = 200;
 
     public static void main(String[] args) {
         configurarConsoleUtf8();
@@ -48,7 +42,11 @@ public class Main {
 
         Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
         // RF7 [IF]: Main só conhece a interface, nunca a implementação concreta.
-        SpeciesDataSource client = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+        SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+
+        // O Main é o único lugar que instancia as classes concretas; daqui
+        // para baixo ele só conversa com a fachada.
+        FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
         boolean running = true;
 
         while (running) {
@@ -57,13 +55,13 @@ public class Main {
 
             switch (opcao) {
                 case "1":
-                    consultaGeral(scanner, client);
+                    consultaGeral(scanner, fachada);
                     break;
                 case "2":
-                    listarOcorrenciasPorNome(scanner, client);
+                    listarOcorrenciasPorNome(scanner, fachada);
                     break;
                 case "3":
-                    relatorioConservacaoPorNome(scanner, client);
+                    relatorioConservacaoPorNome(scanner, fachada);
                     break;
                 case "0":
                     running = false;
@@ -130,216 +128,10 @@ public class Main {
         System.out.print("Escolha uma opção: ");
     }
 
-    // Busca uma espécie por nome (popular ou científico).
-    //
-    // RF7 [A] / Corrigir: Main não gerencia mais offset/limit da API — quem
-    // faz isso é a SearchSession. [N] só busca uma página nova na API se o
-    // usuário realmente pedir para avançar além do que já foi visto; [P]
-    // nunca busca nada novo, só volta no cache da própria sessão.
-    private static Species resolverEspecie(Scanner scanner, SpeciesDataSource client) {
-        System.out.print("\nDigite o nome (comum ou científico) da espécie: ");
-        String termo = scanner.nextLine().trim();
-
-        if (termo.isEmpty()) {
-            System.out.println("Termo de busca não pode ser vazio.\n");
-            return null;
-        }
-
-        System.out.println("Buscando \"" + termo + "\" na base do GBIF...");
-
-        // 1) Tenta primeiro por nome popular (vernacular). Se não achar nada,
-        //    cai para a busca geral (nome científico ou texto livre).
-        SearchSession session = client.searchByVernacular(termo, PAGINA);
-        if(!session.hasResults()) {
-            session = client.searchByScientific(termo, PAGINA);
-        }
-
-        if(!session.hasResults()) {
-            System.out.println("Nenhum resultado encontrado para \"" + termo + "\".\n");
-            return null;
-        }
-
-        while (true) {
-            List<SearchResult> pagina = session.currentPage();
-            exibirResultados(pagina, session.pageIndex() * PAGINA);
-            System.out.print("\nDigite o número do resultado, [N] próxima página, "
-                    + "[P] página anterior ou [0] cancelar: ");
-            String escolha = scanner.nextLine().trim();
-
-            if (escolha.equalsIgnoreCase("N")) {
-                if (!session.nextPage()) {
-                    System.out.println("Não há mais resultados.\n");
-                }
-                continue;
-            }
-
-            if (escolha.equalsIgnoreCase("P")) {
-                if (!session.previousPage()) {
-                    System.out.println("Você já está na primeira página.\n");
-                }
-                continue;
-            }
-
-            if (escolha.equals("0")) {
-                System.out.println("Busca cancelada.\n");
-                return null;
-            }
-
-            int indice;
-            try {
-                indice = Integer.parseInt(escolha);
-            } catch (NumberFormatException e) {
-                System.out.println("Opção inválida.\n");
-                continue;
-            }
-
-            if (indice < 1 || indice > pagina.size()) {
-                System.out.println("Opção inválida.\n");
-                continue;
-            }
-
-            SearchResult selecionado = pagina.get(indice - 1);
-            return client.fetchSpecies(selecionado.getKey());
-        }
-    }
-
-    // Variante de resolverEspecie que permite selecionar MAIS DE UM resultado
-    // por vez, digitando os números separados por vírgula (ex.: "1,3,5").
-    // Usada apenas pelo relatório de conservação — a consulta geral (opção 1)
-    // continua usando resolverEspecie, que seleciona uma única espécie.
-    //
-    // Guarda também o nome popular de cada seleção (vindo do próprio
-    // SearchResult da busca), já que Species não carrega essa informação —
-    // isso é devolvido junto no par (Species, nome popular).
-    private static List<EspecieSelecionada> resolverEspecies(Scanner scanner, SpeciesDataSource client) {
-        List<EspecieSelecionada> selecionadas = new ArrayList<>();
-
-        System.out.print("\nDigite o nome (comum ou científico) da espécie: ");
-        String termo = scanner.nextLine().trim();
-
-        if (termo.isEmpty()) {
-            System.out.println("Termo de busca não pode ser vazio.\n");
-            return selecionadas;
-        }
-
-        System.out.println("Buscando \"" + termo + "\" na base do GBIF...");
-
-        SearchSession session = client.searchByVernacular(termo, PAGINA);
-        if (!session.hasResults()) {
-            session = client.searchByScientific(termo, PAGINA);
-        }
-
-        if (!session.hasResults()) {
-            System.out.println("Nenhum resultado encontrado para \"" + termo + "\".\n");
-            return selecionadas;
-        }
-
-        while (true) {
-            List<SearchResult> pagina = session.currentPage();
-            exibirResultados(pagina, session.pageIndex() * PAGINA);
-            System.out.print("\nDigite o(s) número(s) do(s) resultado(s) separados por vírgula (ex.: 1,3,5), "
-                    + "[N] próxima página, [P] página anterior ou [0] concluir seleção: ");
-            String escolha = scanner.nextLine().trim();
-
-            if (escolha.equalsIgnoreCase("N")) {
-                if (!session.nextPage()) {
-                    System.out.println("Não há mais resultados.\n");
-                }
-                continue;
-            }
-
-            if (escolha.equalsIgnoreCase("P")) {
-                if (!session.previousPage()) {
-                    System.out.println("Você já está na primeira página.\n");
-                }
-                continue;
-            }
-
-            if (escolha.equals("0")) {
-                return selecionadas;
-            }
-
-            boolean algumaValida = false;
-            for (String parte : escolha.split(",")) {
-                String limpo = parte.trim();
-                if (limpo.isEmpty()) {
-                    continue;
-                }
-
-                int indice;
-                try {
-                    indice = Integer.parseInt(limpo);
-                } catch (NumberFormatException e) {
-                    System.out.println("Ignorado: \"" + limpo + "\" não é um número válido.");
-                    continue;
-                }
-
-                if (indice < 1 || indice > pagina.size()) {
-                    System.out.println("Ignorado: número " + indice + " fora do intervalo desta página.");
-                    continue;
-                }
-
-                SearchResult selecionado = pagina.get(indice - 1);
-                Species especie = client.fetchSpecies(selecionado.getKey());
-                if (especie == null) {
-                    System.out.println("Não foi possível carregar os detalhes de \""
-                            + selecionado.getScientificName() + "\".");
-                    continue;
-                }
-
-                String nomePopular = selecionado.getVernacularNames().isEmpty()
-                        ? null
-                        : selecionado.getVernacularNames().get(0);
-
-                selecionadas.add(new EspecieSelecionada(especie, nomePopular));
-                algumaValida = true;
-                System.out.println("\"" + especie.getScientificName() + "\" adicionada.");
-            }
-
-            if (algumaValida) {
-                return selecionadas;
-            }
-            System.out.println("Nenhuma seleção válida. Tente novamente.\n");
-        }
-    }
-
-    // Par simples (espécie + nome popular capturado no momento da busca).
-    // Existe só para o relatório de conservação não perder o nome popular ao
-    // converter SearchResult -> Species (Species não guarda essa informação).
-    private static class EspecieSelecionada {
-        final Species especie;
-        final String nomePopular;
-
-        EspecieSelecionada(Species especie, String nomePopular) {
-            this.especie = especie;
-            this.nomePopular = nomePopular;
-        }
-    }
-
-    // Usado quando precisamos de TODAS as correspondências de uma busca, não
-    // só da página que está sendo exibida (ex.: fluxo de ocorrências, que
-    // agrega dados de todas as espécies encontradas). Percorre a sessão até
-    // o fim, reaproveitando a mesma lógica de paginação sob demanda.
-    private static List<SearchResult> collectAllPages(SearchSession session) {
-        List<SearchResult> todos = new ArrayList<>();
-
-        if(!session.hasResults()) {
-            return todos;
-        }
-
-        todos.addAll(session.currentPage());
-        while (session.nextPage()) {
-            todos.addAll(session.currentPage());
-        }
-
-        return todos;
-    }
-
     // Usado após a consulta geral (opção 1), quando o usuário já escolheu uma
     // espécie específica e pede para ver as ocorrências dela.
-    private static void listarOcorrencias(Species especie, SpeciesDataSource client, Scanner scanner) {
-        List<String> brutos = client.fetchRawOccurrencesByScientificName(especie.getScientificName(), LIMITE_OCORRENCIAS_POR_ESPECIE);
-        ImportResult resultado = client.importarOcorrencias(brutos, especie);
+    private static void listarOcorrencias(Species especie, FachadaBiodiversidade fachada, Scanner scanner) {
+        ImportResult resultado = fachada.ocorrenciasDaEspecie(especie);
 
         exibirOcorrenciasPaginadas(resultado.ocorrencias, resultado.descartados, "\"" + especie.getScientificName() + "\"", scanner);
     }
@@ -350,7 +142,7 @@ public class Main {
     // termo pode casar com mais de uma espécie (ex.: subespécies de
     // Panthera leo), buscamos ocorrências de cada espécie encontrada e
     // juntamos tudo em uma única lista.
-    private static void listarOcorrenciasPorNome(Scanner scanner, SpeciesDataSource client) {
+    private static void listarOcorrenciasPorNome(Scanner scanner, FachadaBiodiversidade fachada) {
         System.out.print("\nDigite o nome (comum ou científico) da espécie: ");
         String termo = scanner.nextLine().trim();
 
@@ -361,38 +153,19 @@ public class Main {
 
         System.out.println("Buscando ocorrências de \"" + termo + "\" na base do GBIF...");
 
-        // Mesma lógica de fallback da consulta geral: tenta nome popular
-        // primeiro, cai para nome científico se não achar nada. Aqui
-        // precisamos de TODAS as correspondências (para agregar ocorrências
-        // de cada uma), então percorremos a sessão até o fim.
-        List<SearchResult> correspondencias = collectAllPages(client.searchByVernacular(termo, PAGINA_LOTE));
-        if (correspondencias.isEmpty()) {
-            correspondencias = collectAllPages(client.searchByScientific(termo, PAGINA_LOTE));
-        }
+        // A fachada aplica a mesma regra de fallback da consulta geral e
+        // percorre todas as páginas de correspondências.
+        List<SearchResult> correspondencias = fachada.buscarTodasAsCorrespondencias(termo);
 
         if (correspondencias.isEmpty()) {
             System.out.println("Nenhuma espécie encontrada para \"" + termo + "\".\n");
             return;
         }
 
-        List<Occurrence> todasOcorrencias = new ArrayList<>();
-        int totalDescartados = 0;
+        // Busca as ocorrências de cada espécie encontrada e junta tudo.
+        ImportResult resultado = fachada.ocorrenciasDasCorrespondencias(correspondencias);
 
-        for (SearchResult correspondencia : correspondencias) {
-            Species especie = client.fetchSpeciesSemEnriquecimento(correspondencia.getKey());
-            if (especie == null) {
-                continue;
-            }
-
-            List<String> brutos = client.fetchRawOccurrencesByScientificName(
-                    especie.getScientificName(), LIMITE_OCORRENCIAS_POR_ESPECIE);
-            ImportResult resultado = client.importarOcorrencias(brutos, especie);
-
-            todasOcorrencias.addAll(resultado.ocorrencias);
-            totalDescartados += resultado.descartados;
-        }
-
-        exibirOcorrenciasPaginadas(todasOcorrencias, totalDescartados, "\"" + termo + "\"", scanner);
+        exibirOcorrenciasPaginadas(resultado.ocorrencias, resultado.descartados, "\"" + termo + "\"", scanner);
     }
 
     // Opção "3. Relatório de conservação por status": o usuário adiciona
@@ -401,37 +174,50 @@ public class Main {
     // mais adicionar. Só então o relatório é montado, agrupando por
     // ConservationStatus via ConservationReport (RF6 [P] — nenhuma lógica
     // específica de subtipo aqui ou lá).
-    private static void relatorioConservacaoPorNome(Scanner scanner, SpeciesDataSource client) {
-        List<Species> especies = new ArrayList<>();
+    private static void relatorioConservacaoPorNome(Scanner scanner, FachadaBiodiversidade fachada) {
         Map<Species, String> nomesPopulares = new IdentityHashMap<>();
 
         System.out.println("\n--- Gerar relatório de conservação ---");
-        System.out.println("Adicione as espécies que deseja incluir no relatório.");
+
+        // RF8: o relatório agora é um levantamento NOMEADO.
+        System.out.print("Digite um nome para o levantamento (ex.: Mata Atlântica 2026): ");
+        String nomeDigitado = scanner.nextLine().trim();
+        Levantamento levantamento = new Levantamento(nomeDigitado.isEmpty() ? "Levantamento sem nome" : nomeDigitado);
+
+        System.out.println("Adicione as espécies que deseja incluir no levantamento \"" + levantamento.getNome() + "\".");
 
         while (true) {
-            List<EspecieSelecionada> novas = resolverEspecies(scanner, client);
+            // Um objeto novo a cada rodada, pois ele guarda as espécies escolhidas.
+            List<EspecieSelecionada> novas = new SelecionadorDeVariasEspecies(scanner, fachada, PAGINA).executar();
             for (EspecieSelecionada selecionada : novas) {
-                especies.add(selecionada.especie);
-                nomesPopulares.put(selecionada.especie, selecionada.nomePopular);
+                if (levantamento.adicionar(selecionada.especie)) {
+                    nomesPopulares.put(selecionada.especie, selecionada.nomePopular);
+                } else {
+                    System.out.println("\"" + selecionada.especie.getScientificName()
+                            + "\" já está no levantamento e não foi adicionada de novo.");
+                }
             }
 
             if (!novas.isEmpty()) {
-                System.out.println("\n" + especies.size() + " espécie(s) no relatório até agora.");
+                System.out.println("\n" + levantamento.total() + " espécie(s) no levantamento até agora.");
             }
 
-            System.out.print("\nDeseja adicionar mais espécies ao relatório? (S/N): ");
+            System.out.print("\nDeseja adicionar mais espécies ao levantamento? (S/N): ");
             String continuar = scanner.nextLine().trim();
             if (!continuar.equalsIgnoreCase("S")) {
                 break;
             }
         }
 
-        if (especies.isEmpty()) {
+        if (levantamento.estaVazio()) {
             System.out.println("\nNenhuma espécie adicionada. Relatório cancelado.\n");
             return;
         }
 
-        Map<ConservationStatus, List<Species>> grupos = ConservationReport.agruparPorStatus(especies);
+        // Resumo do levantamento: nome, total, contagem por status e categoria mais comum.
+        System.out.println("\n" + levantamento.resumo());
+
+        Map<ConservationStatus, List<Species>> grupos = fachada.agruparPorStatus(levantamento.getOrganismos());
         exibirCategoriasDeRisco(grupos, nomesPopulares, scanner);
     }
 
@@ -553,8 +339,10 @@ public class Main {
         }
     }
 
-    private static void consultaGeral(Scanner scanner, SpeciesDataSource client) {
-        Species especie = resolverEspecie(scanner, client);
+    private static void consultaGeral(Scanner scanner, FachadaBiodiversidade fachada) {
+        // Template Method: o esqueleto (pedir nome, buscar, navegar entre
+        // páginas) vive em NavegadorDeResultados; aqui só escolhemos a variação.
+        Species especie = new SelecionadorDeUmaEspecie(scanner, fachada, PAGINA).executar();
 
         if (especie == null) {
             return;
@@ -570,29 +358,9 @@ public class Main {
         String verOcorrencias = scanner.nextLine().trim();
 
         if (verOcorrencias.equalsIgnoreCase("S")) {
-            listarOcorrencias(especie, client, scanner);
+            listarOcorrencias(especie, fachada, scanner);
         } else {
             System.out.println();
-        }
-    }
-
-    private static void exibirResultados(List<SearchResult> pagina, int offset) {
-        System.out.println("\n--- Resultados (" + (offset + 1) + " a " + (offset + pagina.size()) + ") ---");
-        for (int i = 0; i < pagina.size(); i++) {
-            SearchResult r = pagina.get(i);
-
-            String nomesPopulares;
-            if (r.getVernacularNames().isEmpty()) {
-                nomesPopulares = "-";
-            } else {
-                int qtd = Math.min(3, r.getVernacularNames().size());
-                nomesPopulares = String.join(", ", r.getVernacularNames().subList(0, qtd));
-            }
-
-            String classe = r.getTaxonomicClass() == null ? "-" : r.getTaxonomicClass();
-
-            System.out.printf("%2d. %-35s | Popular: %-30s | Classe: %s%n",
-                    i + 1, r.getScientificName(), nomesPopulares, classe);
         }
     }
 }

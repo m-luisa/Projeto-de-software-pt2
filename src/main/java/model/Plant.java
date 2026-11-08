@@ -10,4 +10,9 @@ public class Plant extends Species {
     public String describeHabitat() {
         return "Planta (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Plantas";
+    }
 }

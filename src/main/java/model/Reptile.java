@@ -10,4 +10,9 @@ public class Reptile extends Species {
     public String describeHabitat() {
         return "Réptil (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Répteis";
+    }
 }

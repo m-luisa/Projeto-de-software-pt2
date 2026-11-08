@@ -10,4 +10,9 @@ public class Bird extends Species {
     public String describeHabitat() {
         return "Ave (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Aves";
+    }
 }

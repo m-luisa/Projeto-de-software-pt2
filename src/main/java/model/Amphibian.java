@@ -10,4 +10,9 @@ public class Amphibian extends Species {
     public String describeHabitat() {
         return "Anfíbio (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Anfíbios";
+    }
 }

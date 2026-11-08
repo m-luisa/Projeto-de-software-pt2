@@ -10,4 +10,9 @@ public class Crustacean extends Species {
     public String describeHabitat() {
         return "Crustáceo (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Crustáceos";
+    }
 }

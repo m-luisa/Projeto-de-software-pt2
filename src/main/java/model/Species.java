@@ -60,4 +60,12 @@ public abstract class Species {
     }
 
     public abstract String describeHabitat();
+
+    /**
+     * Nome da categoria taxonômica no plural, para estatísticas (ex.: "Aves",
+     * "Mamíferos"). Cada subclasse responde por si, então o Levantamento
+     * (RF8) conta categorias sem nenhum "instanceof" ou "switch" por tipo, e
+     * uma categoria nova só precisa implementar este método.
+     */
+    public abstract String getCategoria();
 }

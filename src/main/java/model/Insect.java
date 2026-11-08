@@ -16,4 +16,9 @@ public class Insect extends Species {
         sb.append(describeCommonTraits());
         return sb.toString();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Insetos";
+    }
 }

@@ -10,4 +10,9 @@ public class Mollusk extends Species {
     public String describeHabitat() {
         return "Molusco (" + getScientificName() + ") | Status: " + getStatus().emPortugues() + describeCommonTraits();
     }
+
+    @Override
+    public String getCategoria() {
+        return "Moluscos";
+    }
 }
