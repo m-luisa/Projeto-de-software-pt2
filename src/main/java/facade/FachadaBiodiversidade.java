@@ -23,10 +23,6 @@ public class FachadaBiodiversidade {
     // caso, sabemos de antemão que vamos consumir a lista inteira.
     private static final int TAMANHO_PAGINA_LOTE = 50;
 
-    // Quantas ocorrências brutas são buscadas por espécie individual antes de
-    // serem validadas/filtradas.
-    private static final int LIMITE_OCORRENCIAS_POR_ESPECIE = 200;
-
     private final SpeciesDataSource fonte;
 
     // PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um
@@ -102,9 +98,7 @@ public class FachadaBiodiversidade {
     }
 
     public ImportResult ocorrenciasDaEspecie(Species especie) {
-        List<String> brutos = fonte.fetchRawOccurrencesByScientificName(
-                especie.getScientificName(), LIMITE_OCORRENCIAS_POR_ESPECIE);
-        return fonte.importarOcorrencias(brutos, especie);
+        return fonte.fetchOcorrencias(especie);
     }
 
     public ImportResult ocorrenciasDasCorrespondencias(List<SearchResult> correspondencias) {
@@ -119,6 +113,7 @@ public class FachadaBiodiversidade {
             ImportResult parcial = ocorrenciasDaEspecie(especie);
             agregado.ocorrencias.addAll(parcial.ocorrencias);
             agregado.descartados += parcial.descartados;
+            agregado.motivosDescarte.addAll(parcial.motivosDescarte);
         }
 
         return agregado;

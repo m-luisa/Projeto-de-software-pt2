@@ -12,6 +12,6 @@ public class CriadorDePlanta extends CriadorDeEspecie {
 
     @Override
     protected Species criar(int id, String nome, ConservationStatus status) {
-        return new Plant(id, nome, status, "-", "-", "-", "-");
+        return new Plant(id, nome, status, "-", "-", "-", "-", "-");
     }
 }

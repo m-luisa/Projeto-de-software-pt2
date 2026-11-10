@@ -1,5 +1,7 @@
 package model;
 
+import java.util.Objects;
+
 public abstract class Species {
     private int id;
     private String scientificName;
@@ -14,9 +16,9 @@ public abstract class Species {
             throw new IllegalArgumentException("Nome científico inválido ou ausente para a espécie ID: " + id);
         }
         
+        this.status = Objects.requireNonNull(status, "O status de conservação não pode ser nulo (use NOT_EVALUATED).");
         this.id = id;
         this.scientificName = scientificName;
-        this.status = status;
         this.habitat = habitat;
         this.diet = diet;
         this.length = length;
@@ -50,9 +52,14 @@ public abstract class Species {
         }
     }
 
+    /** Rótulo do campo de habitat; categorias podem usar um termo mais apropriado (ex.: "Bioma"). */
+    protected String rotuloHabitat() {
+        return "Habitat";
+    }
+
     protected String describeCommonTraits() {
         StringBuilder sb = new StringBuilder();
-        appendCampo(sb, "Habitat", habitat);
+        appendCampo(sb, rotuloHabitat(), habitat);
         appendCampo(sb, "Hábitos alimentares", diet);
         appendCampo(sb, "Comprimento", length);
         appendCampo(sb, "Massa", mass);

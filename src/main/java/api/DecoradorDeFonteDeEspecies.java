@@ -2,8 +2,6 @@ package api;
 
 import model.Species;
 
-import java.util.List;
-
 public abstract class DecoradorDeFonteDeEspecies implements SpeciesDataSource {
 
     // A fonte "de dentro" (pode ser o GBIFApiClient ou outro decorador).
@@ -41,12 +39,7 @@ public abstract class DecoradorDeFonteDeEspecies implements SpeciesDataSource {
     }
 
     @Override
-    public List<String> fetchRawOccurrencesByScientificName(String scientificName, int limit) {
-        return fonte.fetchRawOccurrencesByScientificName(scientificName, limit);
-    }
-
-    @Override
-    public ImportResult importarOcorrencias(List<String> jsonsBrutos, Species especie) {
-        return fonte.importarOcorrencias(jsonsBrutos, especie);
+    public ImportResult fetchOcorrencias(Species especie) {
+        return fonte.fetchOcorrencias(especie);
     }
 }

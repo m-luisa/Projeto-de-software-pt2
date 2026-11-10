@@ -100,11 +100,35 @@ public class GBIFApiClient implements SpeciesDataSource {
         return null;
     }
 
+    // Teto de segurança por espécie (4 páginas de 300). A paginação em si é
+    // invisível para quem chama: ver fetchOcorrencias.
+    private static final int TAMANHO_PAGINA_OCORRENCIAS = 300; // máximo aceito pelo GBIF
+    private static final int MAX_OCORRENCIAS = 1200;
+
     @Override
-    public List<String> fetchRawOccurrencesByScientificName(String scientificName, int limit) {
+    public ImportResult fetchOcorrencias(Species especie) {
+        List<String> brutas = new ArrayList<>();
+        int offset = 0;
+        boolean fim = false;
+
+        while (!fim && brutas.size() < MAX_OCORRENCIAS) {
+            String pagina = fetchPaginaOcorrencias(especie.getScientificName(), offset);
+            if (pagina == null) {
+                break;
+            }
+            List<String> itens = extractResultObjects(pagina);
+            brutas.addAll(itens);
+            offset += TAMANHO_PAGINA_OCORRENCIAS;
+            fim = itens.isEmpty() || Pattern.compile("\"endOfRecords\"\\s*:\\s*true").matcher(pagina).find();
+        }
+
+        return importarOcorrencias(brutas, especie);
+    }
+
+    private String fetchPaginaOcorrencias(String scientificName, int offset) {
         String encoded = URLEncoder.encode(scientificName, StandardCharsets.UTF_8);
         String url = "https://api.gbif.org/v1/occurrence/search?scientificName=" + encoded
-                + "&limit=" + limit;
+                + "&limit=" + TAMANHO_PAGINA_OCORRENCIAS + "&offset=" + offset;
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -117,13 +141,12 @@ public class GBIFApiClient implements SpeciesDataSource {
 
             if (response.statusCode() != 200) {
                 System.out.println("Erro na requisição de ocorrências. Código HTTP: " + response.statusCode());
-                return new ArrayList<>();
+                return null;
             }
-
-            return extractResultObjects(response.body());
+            return response.body();
         } catch (Exception e) {
             System.err.println("Erro ao comunicar com a API do GBIF: " + e.getMessage());
-            return new ArrayList<>();
+            return null;
         }
     }
 
@@ -336,8 +359,7 @@ public class GBIFApiClient implements SpeciesDataSource {
         }
     }
 
-    @Override
-    public ImportResult importarOcorrencias(List<String> jsonsBrutos, Species especie) {
+    private ImportResult importarOcorrencias(List<String> jsonsBrutos, Species especie) {
         ImportResult resultado = new ImportResult();
 
         for (String raw : jsonsBrutos) {
@@ -362,8 +384,10 @@ public class GBIFApiClient implements SpeciesDataSource {
                         .build();
                 resultado.ocorrencias.add(occ);
 
-            } catch (IllegalArgumentException e) {
+            } catch (RuntimeException e) {
+                // RF9: qualquer registro malformado é ignorado e registrado; o lote continua.
                 resultado.descartados++;
+                resultado.motivosDescarte.add(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
             }
         }
 

@@ -43,14 +43,11 @@ public interface SpeciesDataSource {
     SearchSession searchByScientific(String termo, int pageSize);
 
     /**
-     * Retorna ocorrências brutas (JSON) de uma espécie pelo nome científico,
-     * até o limite informado.
+     * Devolve TODAS as ocorrências válidas da espécie (até um teto de
+     * segurança definido pela implementação). Paginação, construção da
+     * consulta e o formato bruto da API ficam escondidos dentro da
+     * implementação (RF7). Registros malformados são descartados e contados
+     * no ImportResult sem interromper o lote (RF9).
      */
-    List<String> fetchRawOccurrencesByScientificName(String ScientificName, int limit);
-
-    /**
-     * Converte ocorrências brutas em objetos de domínio, descartando
-     * registros inválidos.
-     */
-    ImportResult importarOcorrencias(List<String> jsonsBrutos, Species especie);
+    ImportResult fetchOcorrencias(Species especie);
 }

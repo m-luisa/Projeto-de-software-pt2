@@ -20,14 +20,14 @@ public class Occurrence {
         this.horarioConhecido = builder.horarioConhecido;
     }
 
-    public void setDate(Date d) {
+    private void setDate(Date d) {
         if (d != null && d.after(new Date())) {
             throw new IllegalArgumentException("A data da ocorrência não pode ser no futuro.");
         }
         this.date = d;
     }
 
-    public void setCoordinates(double lat, double lon) {
+    private void setCoordinates(double lat, double lon) {
         if (Double.isNaN(lat) || Double.isNaN(lon)) {
             throw new IllegalArgumentException("Coordenadas inválidas (NaN).");
         }
@@ -42,7 +42,7 @@ public class Occurrence {
         this.longitude = lon;
     }
 
-    public void setHorarioConhecido(boolean horarioConhecido) {
+    private void setHorarioConhecido(boolean horarioConhecido) {
         this.horarioConhecido = horarioConhecido;
     }
 

@@ -1,18 +1,17 @@
 package api;
- 
+
 import model.Occurrence;
- 
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Resultado da importação de ocorrências brutas: os registros válidos já
- * convertidos, e a contagem de quantos foram descartados por dados
- * inválidos. Antes era uma classe aninhada em GBIFApiClient
- * (ResultadoLote); foi movida para cá porque agora faz parte do contrato
- * de SpeciesDataSource, não de uma implementação específica.
+ * Resultado da importação de ocorrências: os registros válidos já
+ * convertidos, quantos foram descartados e o motivo de cada descarte
+ * (RF9: registros malformados são registrados como ignorados).
  */
 public class ImportResult {
     public final List<Occurrence> ocorrencias = new ArrayList<>();
+    public final List<String> motivosDescarte = new ArrayList<>();
     public int descartados = 0;
 }

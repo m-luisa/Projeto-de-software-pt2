@@ -57,7 +57,7 @@ public class ConservationReport {
                 continue;
             }
 
-            sb.append("\n").append(entrada.getKey()).append(" (").append(grupo.size()).append("):\n");
+            sb.append("\n").append(entrada.getKey().emPortugues()).append(" (").append(grupo.size()).append("):\n");
             for (Species especie : grupo) {
                 sb.append("  - ").append(especie.getScientificName())
                         .append(" [").append(especie.getClass().getSimpleName()).append("]\n");
