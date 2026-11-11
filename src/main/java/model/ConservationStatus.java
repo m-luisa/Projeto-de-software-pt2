@@ -45,10 +45,7 @@ public enum ConservationStatus {
     }
 
     /**
-     * Nome da classificação em português, para exibição ao usuário. O nome
-     * interno do enum (em inglês) continua sendo usado como identificador
-     * estável em qualquer lugar do código que precise comparar/armazenar o
-     * status — esta tradução é só para a camada de apresentação.
+     * Nome da classificação em português, para exibição ao usuário. O nome interno do enum (em ingles) continua sendo usado como identificador estavel em qualquer lugar do código que precise comparar/armazenar o status — esta tradução é só para a camada de apresentação
      */
     public String emPortugues() {
         switch (this) {

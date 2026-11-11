@@ -22,11 +22,8 @@ public class ConservationReport {
     }
 
     /**
-     * Agrupa as espécies por status de conservação. Todas as categorias do
-     * enum aparecem como chave (mesmo sem nenhuma espécie), na ordem
-     * declarada em ConservationStatus (do mais crítico ao menos crítico), e
-     * cada grupo preserva a ordem de chegada das espécies na lista original.
-     */
+     *agrupa as espcies por status de conservaçao. Todas as categorias do enum aparecem como chave (mesmo sem nenhuma espécie), na ordem declarada em ConservationStatus (do mais crítico ao menos crítico),  cada grupo preserva a ordem de chegada das espécies na lista original
+     **/
     public static Map<ConservationStatus, List<Species>> agruparPorStatus(List<Species> especies) {
         Map<ConservationStatus, List<Species>> grupos = new LinkedHashMap<>();
 
@@ -42,8 +39,7 @@ public class ConservationReport {
     }
 
     /**
-     * Monta a versão textual do relatório, pronta para impressão. Só inclui
-     * categorias de status que tiverem pelo menos uma espécie associada.
+     * monta a versao textual do relaorio, pronta para impressao. Só inclui categorias de status que tiverem pelo menos uma espécie associada
      */
     public static String formatar(List<Species> especies) {
         Map<ConservationStatus, List<Species>> grupos = agruparPorStatus(especies);

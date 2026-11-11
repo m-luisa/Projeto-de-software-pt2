@@ -5,10 +5,7 @@ import model.GenericSpecies;
 import model.Species;
 
 /**
- * Criador "curinga": usado pela SpeciesFactory quando a classe taxonômica
- * não está mapeada em nenhum dos outros criadores. Diferente dos demais,
- * este criador precisa guardar a classe taxonômica original que veio do
- * GBIF, porque a GenericSpecies a exibe ao usuário.
+ * Criador "curinga": usado pela SpeciesFactory quando a classe taxonomica nao esta mapeada em nenhum dos outros criadores. Diferente dos demais, este criador precisa guardar a classe taxonômica original que veio do GBIF, porque a GenericSpecies a exibe ao usuário
  */
 public class CriadorDeEspecieGenerica extends CriadorDeEspecie {
 

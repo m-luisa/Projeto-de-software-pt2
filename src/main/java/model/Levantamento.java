@@ -8,16 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * RF8 [C] — Levantamento nomeado com agregados.
+ * RF8 [C] — Levantamento nomeado com agregados
  *
- * Um levantamento é um grupo de organismos (Species) com um nome, por
- * exemplo "Mata Atlântica 2026". Ele sabe responder perguntas sobre o
- * grupo inteiro: quantos organismos tem, quantos há em cada status de
- * conservação e qual é a categoria taxonômica mais comum.
+ * um levantamento é um grupo de organismos (Species) com um nome, por exemplo "Mata Atlântica 2026". Ele sabe responder perguntas sobre o grupo inteiro: quantos organismos tem, quantos há em cada status de conservação e qual é a categoria taxonômica mais comum
  *
- * Ele só usa o que toda Species já oferece (getStatus() e getCategoria()),
- * então funciona igual para aves, mamíferos, plantas ou uma categoria que
- * venha a ser criada depois, sem nenhum "instanceof" ou "switch" por tipo.
+ * ele só usa o que toda Species já oferece (getStatus() e getCategoria()), então funciona igual para aves, mamíferos, plantas ou uma categoria que venha a ser criada depois, sem nenhum "instanceof" ou "switch" por tipo
  */
 public class Levantamento {
 
@@ -36,9 +31,7 @@ public class Levantamento {
     }
 
     /**
-     * Adiciona um organismo. Se a mesma espécie (mesmo id) já estiver no
-     * levantamento, não adiciona de novo e devolve false, para que a
-     * mesma espécie não conte duas vezes nas estatísticas.
+     * adiciona um organismo. Se a mesma espécie (mesmo id) já estiver no levantamento, não adiciona de novo e devolve false, para que a mesma espécie não conte duas vezes nas estatísticas
      */
     public boolean adicionar(Species especie) {
         if (especie == null) {
@@ -53,7 +46,7 @@ public class Levantamento {
         return true;
     }
 
-    /** Lista só para leitura: quem usa o levantamento não consegue alterar a coleção por fora. */
+    /** lista só para leitura: quem usa o levantamento não consegue alterar a coleção por fora */
     public List<Species> getOrganismos() {
         return Collections.unmodifiableList(organismos);
     }
@@ -67,9 +60,7 @@ public class Levantamento {
     }
 
     /**
-     * Quantos organismos há em cada status de conservação. Só aparecem os
-     * status que têm pelo menos um organismo, na ordem do enum (do mais
-     * crítico ao menos crítico). Reaproveita o ConservationReport (RF6).
+     * Quantos organismos há em cada status de conservação. Só aparecem os status que têm pelo menos um organismo, na ordem do enum (do mais critico ao menos crítico). Reaproveita o ConservationReport (RF6)
      */
     public Map<ConservationStatus, Integer> contagemPorStatus() {
         Map<ConservationStatus, Integer> contagem = new LinkedHashMap<>();
@@ -83,8 +74,7 @@ public class Levantamento {
     }
 
     /**
-     * Quantos organismos há em cada categoria taxonômica (ex.: Aves = 18),
-     * na ordem em que cada categoria apareceu primeiro no levantamento.
+     * Quantos organismos há em cada categoria taxonômica (ex.: Aves = 18), na ordem em que cada categoria apareceu primeiro no levantamento
      */
     public Map<String, Integer> contagemPorCategoria() {
         Map<String, Integer> contagem = new LinkedHashMap<>();
@@ -95,8 +85,7 @@ public class Levantamento {
     }
 
     /**
-     * A categoria com mais organismos. Se duas empatarem, vale a que
-     * apareceu primeiro no levantamento. Vazio se não há organismos.
+     * a categoria com mais organismos. Se duas empatarem, vale a que apareceu primeiro no levantamento. Vazio se não há organismos
      */
     public Optional<Map.Entry<String, Integer>> categoriaMaisComum() {
         Map.Entry<String, Integer> melhor = null;
@@ -109,9 +98,7 @@ public class Levantamento {
     }
 
     /**
-     * Resumo em uma linha, no espírito do exemplo da especificação:
-     * Levantamento "Mata Atlântica 2026": 45 organismos | Em Perigo: 3,
-     * Vulnerável: 12 | Categoria mais comum: Aves (18)
+     * Resumo em uma linha, no espírito do exemplo da especificação: Levantamento "Mata Atlântica 2026": 45 organismos | Em Perigo: 3, Vulnerável: 12 | Categoria mais comum: Aves (18)
      */
     public String resumo() {
         if (estaVazio()) {

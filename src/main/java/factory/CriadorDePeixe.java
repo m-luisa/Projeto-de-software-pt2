@@ -5,8 +5,7 @@ import model.Fish;
 import model.Species;
 
 /**
- * Criador concreto (Factory Method) dos peixes, classe taxonômica
- * "Actinopterygii". Os "-" são o marcador de "dado ainda desconhecido".
+ * criador concreto (Factory Method) dos peixes, classe taxonômica "Actinopterygii". Os "-" são o marcador de "dado ainda desconhecido"
  */
 public class CriadorDePeixe extends CriadorDeEspecie {
 

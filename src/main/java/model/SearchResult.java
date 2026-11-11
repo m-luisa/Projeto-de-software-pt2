@@ -2,9 +2,7 @@ package model;
 
 import java.util.List;
 
-// Representa uma linha da lista de resultados de busca (ainda não é uma
-// Species completa - isso só acontece quando o usuário escolhe um item e
-// chamamos fetchSpecies(key) pra pegar os detalhes).
+// Representa uma linha da lista de resultados de busca (ainda não é um Species completa - isso só acontece quando o usuário escolhe um item e chamamos fetchSpecies(key) pra pegar os detalhes)
 public class SearchResult {
 
     private final int key;

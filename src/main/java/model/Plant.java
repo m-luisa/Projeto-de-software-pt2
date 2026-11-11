@@ -8,7 +8,7 @@ public class Plant extends Species {
         this.floweringPeriod = floweringPeriod;
     }
 
-    // Para plantas, o "habitat" é descrito como bioma.
+    //para plantas, o "habitat" é descrito como bioma
     @Override
     protected String rotuloHabitat() {
         return "Bioma";

@@ -5,8 +5,7 @@ import model.Crustacean;
 import model.Species;
 
 /**
- * Criador concreto (Factory Method) dos crustáceos, classe taxonômica
- * "Malacostraca". Os "-" são o marcador de "dado ainda desconhecido".
+ * Criador concreto (Factory Method) dos crustáceos, classe taxonômica "Malacostraca". Os "-" são o marcador de "dado ainda desconhecido"
  */
 public class CriadorDeCrustaceo extends CriadorDeEspecie {
 

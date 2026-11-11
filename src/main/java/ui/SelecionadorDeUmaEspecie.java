@@ -19,7 +19,7 @@ public class SelecionadorDeUmaEspecie extends NavegadorDeResultados<Species> {
 
     @Override
     protected Species valorQuandoNaoHaResultado() {
-        return null; // quem chamou entende null como "nenhuma espécie escolhida"
+        return null; //quem chamou entende null como "nenhuma espécie escolhida"
     }
 
     @Override

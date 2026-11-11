@@ -34,17 +34,9 @@ public abstract class Species {
     public String getMass() { return mass; }
 
     /**
-     * "-" é o marcador interno de "nenhuma das fontes (GBIF/Wikidata/IUCN)
-     * tinha esse dado" (ver EnrichedSpeciesDataSource). Ele nunca é
-     * exibido ao usuário final: em vez de uma ficha com campos "quebrados"
-     * tipo "Dieta: -", a camada de apresentação simplesmente omite o
-     * atributo ausente, mostrando uma ficha mais enxuta mas honesta — sem
-     * inventar nem aproximar dado que não existe.
+     * "-" é o marcador interno de "nenhuma das fontes (GBIF/Wikidata/IUCN) tinha esse dado" (ver EnrichedSpeciesDataSource). Ele nunca é exibido ao usuário final: em vez de uma ficha com campos "quebrados" tipo "Dieta: -", a camada de apresentação simplesmente omite o atributo ausente, mostrando uma ficha mais enxuta mas honesta — sem inventar nem aproximar dado que não existe
      *
-     * static e protected para poder ser reaproveitado por qualquer
-     * subclasse ao montar seus próprios campos específicos (rota
-     * migratória, ciclo de atividade, envergadura, bioma, etc.), sem
-     * duplicar essa checagem em cada uma.
+     * static e protected para poder ser reaproveitado por qualquer subclasse ao montar seus próprios campos específicos (rota migratória, ciclo de atividade, envergadura, bioma, etc.), sem duplicar essa checagem em cada uma
      */
     protected static void appendCampo(StringBuilder sb, String rotulo, String valor) {
         if (valor != null && !valor.equals("-")) {
@@ -69,10 +61,7 @@ public abstract class Species {
     public abstract String describeHabitat();
 
     /**
-     * Nome da categoria taxonômica no plural, para estatísticas (ex.: "Aves",
-     * "Mamíferos"). Cada subclasse responde por si, então o Levantamento
-     * (RF8) conta categorias sem nenhum "instanceof" ou "switch" por tipo, e
-     * uma categoria nova só precisa implementar este método.
+     * Nome da categoria taxonômica no plural, para estatísticas (ex.: "Aves","Mamíferos"). Cada subclasse responde por si, então o Levantamento(RF8) conta categorias sem nenhum "instanceof" ou "switch" por tipo, e uma categoria nova só precisa implementar este método
      */
     public abstract String getCategoria();
 }

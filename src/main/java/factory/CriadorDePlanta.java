@@ -4,10 +4,7 @@ import model.ConservationStatus;
 import model.Plant;
 import model.Species;
 
-/**
- * Criador concreto (Factory Method) das plantas, classe taxonômica
- * "Magnoliopsida". Os "-" são o marcador de "dado ainda desconhecido".
- */
+
 public class CriadorDePlanta extends CriadorDeEspecie {
 
     @Override

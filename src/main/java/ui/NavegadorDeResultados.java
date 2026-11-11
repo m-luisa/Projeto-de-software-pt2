@@ -31,8 +31,7 @@ public abstract class NavegadorDeResultados<T> {
     private final FachadaBiodiversidade fachada;
     private final int tamanhoPagina;
 
-    // Usamos um "concluido" separado do "resultado" porque o resultado pode
-    // ser null (ex.: usuário cancelou) e mesmo assim a navegação terminou.
+    //Usamos um "concluido" separado do "resultado" porque o resultado pode ser null (ex.: usuário cancelou) e mesmo assim a navegação terminou.
     private boolean concluido;
     private T resultado;
 
@@ -42,9 +41,8 @@ public abstract class NavegadorDeResultados<T> {
         this.tamanhoPagina = tamanhoPagina;
     }
 
-    // ------------------------------------------------------------------
+  
     // TEMPLATE METHOD: o esqueleto fixo. É final de propósito.
-    // ------------------------------------------------------------------
     public final T executar() {
         System.out.print("\nDigite o nome (comum ou científico) da espécie: ");
         String termo = entrada.nextLine().trim();
@@ -56,9 +54,9 @@ public abstract class NavegadorDeResultados<T> {
 
         System.out.println("Buscando \"" + termo + "\" na base do GBIF...");
 
-        // RF7 [A]: quem controla a paginação é a SearchSession, não esta classe.
-        // [N] só busca página nova na API se o usuário realmente avançar;
-        // [P] nunca busca nada, só volta no cache da sessão.
+        //RF7 [A]: quem controla a paginação é a SearchSession, não esta classe
+        //[N] só busca página nova na API se o usuário realmente avançar;
+        //[P] nunca busca nada, só volta no cache da sessão
         SearchSession sessao = fachada.buscarEspecies(termo, tamanhoPagina);
 
         if (!sessao.hasResults()) {
@@ -72,7 +70,7 @@ public abstract class NavegadorDeResultados<T> {
             System.out.print(textoDoPedidoDeEscolha());
             String escolha = entrada.nextLine().trim();
 
-            // Passos comuns às duas variações: navegar entre páginas.
+            // Passos comuns às duas variações: navegar entre páginas
             if (escolha.equalsIgnoreCase("N")) {
                 if (!sessao.nextPage()) {
                     System.out.println("Não há mais resultados.\n");
@@ -91,31 +89,30 @@ public abstract class NavegadorDeResultados<T> {
         return resultado;
     }
 
-    // ------------------------------------------------------------------
-    // GANCHOS: cada subclasse decide o seu comportamento.
-    // ------------------------------------------------------------------
+    //GANCHOS: cada subclasse decide o seu comportamento.
+   
 
-    /** Valor devolvido quando o termo é vazio ou a busca não acha nada. */
+    /**Valor devolvido quando o termo é vazio ou a busca não acha nada */
     protected abstract T valorQuandoNaoHaResultado();
 
-    /** Texto mostrado ao pedir a escolha do usuário. */
+    /**Texto mostrado ao pedir a escolha do usuári */
     protected abstract String textoDoPedidoDeEscolha();
 
-    /** O que fazer quando o usuário digita [0]. Deve chamar concluir(...). */
+    /**O que fazer quando o usuário digita [0]. Deve chamar concluir(...) */
     protected abstract void aoPressionarZero();
 
     /**
      * O que fazer com qualquer outra escolha (um número, vários números...).
      * Chama concluir(...) quando terminou; se a escolha foi inválida, só
-     * avisa o usuário e retorna (a navegação continua).
+     * avisa o usuário e retorna (a navegação continua)
      */
     protected abstract void tratarEscolha(String escolha, List<SearchResult> paginaAtual);
 
-    // ------------------------------------------------------------------
-    // Ferramentas que as subclasses usam.
-    // ------------------------------------------------------------------
+   
+    //Ferramentas que as subclasses usam
+   
 
-    /** Encerra a navegação e define o resultado de executar(). */
+    /**Encerra a navegação e define o resultado de executar() */
     protected final void concluir(T valor) {
         this.resultado = valor;
         this.concluido = true;
@@ -125,7 +122,7 @@ public abstract class NavegadorDeResultados<T> {
         return fachada;
     }
 
-    // Mostra uma página de resultados (antes era Main.exibirResultados).
+    // Mostra uma página de resultados (antes era Main.exibirResultados)
     private void exibirPagina(List<SearchResult> pagina, int deslocamento) {
         System.out.println("\n--- Resultados (" + (deslocamento + 1) + " a " + (deslocamento + pagina.size()) + ") ---");
         for (int i = 0; i < pagina.size(); i++) {

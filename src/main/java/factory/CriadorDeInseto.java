@@ -5,9 +5,7 @@ import model.Insect;
 import model.Species;
 
 /**
- * Criador concreto (Factory Method) dos insetos, classe taxonômica
- * "Insecta". O inseto tem um campo a mais (a envergadura das asas), por isso
- * são cinco "-" em vez de quatro.
+ * Criador concreto (Factory Method) dos insetos, classe taxonomica "Insecta". O inseto tem um campo a mais (a envergadura das asas), por isso são cinco "-" em vez de quatro.
  */
 public class CriadorDeInseto extends CriadorDeEspecie {
 

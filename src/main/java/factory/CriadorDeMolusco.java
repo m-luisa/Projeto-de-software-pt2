@@ -5,8 +5,7 @@ import model.Mollusk;
 import model.Species;
 
 /**
- * Criador concreto (Factory Method) dos moluscos, classe taxonômica
- * "Gastropoda". Os "-" são o marcador de "dado ainda desconhecido".
+ * criador concreto (Factory Method) dos moluscos, classe taxonômica "Gastropoda". Os "-" sao o marcador de "dado ainda desconhecido".
  */
 public class CriadorDeMolusco extends CriadorDeEspecie {
 

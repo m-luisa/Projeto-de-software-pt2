@@ -17,27 +17,20 @@ import java.util.Map;
 
 public class FachadaBiodiversidade {
 
-    // Tamanho de página usado quando precisamos buscar TODAS as correspondências
-    // de uma vez (fluxo de ocorrências, que agrega dados de todas as espécies
-    // encontradas). Maior que as páginas de exibição em tela porque, nesse
-    // caso, sabemos de antemão que vamos consumir a lista inteira.
+    // tamanho de página usado quando precisamos buscar TODAS as correspondências de uma vez (fluxo de ocorrências, que agrega dados de todas as espécies encontradas)
     private static final int TAMANHO_PAGINA_LOTE = 50;
 
     private final SpeciesDataSource fonte;
 
-    // PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um
-    // por vez, na ordem, e fica com o primeiro que achar resultado. A ordem
-    // padrão é a mesma de antes do padrão: nome popular primeiro, depois o
-    // científico.
+    // PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um por vez, na ordem, e fica com o primeiro que achar resultado. A ordem padrão é a mesma de antes do padrão: nome popular primeiro, depois o científico
     private final List<EstrategiaDeBusca> estrategias;
 
-    // Construtor usado pelo Main: monta a ordem padrão (popular, científico).
+    //construtor usado pelo Main: monta a ordem padrão (popular, científico)
     public FachadaBiodiversidade(SpeciesDataSource fonte) {
         this(fonte, List.of(new BuscaPorNomePopular(), new BuscaPorNomeCientifico()));
     }
 
-    // Construtor que permite escolher quais estratégias usar e em que ordem
-    // (por exemplo, só a científica, ou uma nova estratégia criada depois).
+    // Construtor que permite escolher quais estratégias usar e em que ordem por exemplo, só a científica, ou uma nova estratégia criada depois)
     public FachadaBiodiversidade(SpeciesDataSource fonte, List<EstrategiaDeBusca> estrategias) {
         if (fonte == null) {
             throw new IllegalArgumentException("A fonte de dados não pode ser nula.");
@@ -50,10 +43,7 @@ public class FachadaBiodiversidade {
     }
 
     /**
-     * Busca espécies tentando cada estratégia, na ordem, até uma achar
-     * resultado. Se nenhuma achar, devolve a sessão da última tentativa
-     * (que simplesmente responde hasResults() == false), igual ao
-     * comportamento de antes do padrão.
+     * Busca espécies tentando cada estratégia, na ordem, até uma achar resultado. Se nenhuma achar, devolve a sessão da última tentativa (que simplesmente responde hasResults() == false), igual ao comportamento de antes do padrão
      */
     public SearchSession buscarEspecies(String termo, int tamanhoPagina) {
         SearchSession sessao = null;
@@ -67,9 +57,7 @@ public class FachadaBiodiversidade {
     }
 
     /**
-     * RF10: busca usando UMA estratégia escolhida de forma independente, sem
-     * fallback. Quem chama decide o método; o código que exibe o resultado
-     * não sabe nem se importa com qual foi.
+     * RF10: busca usando UMA estratégia escolhida de forma independente, sem fallback. Quem chama decide o método; o código que exibe o resultado não sabe nem se importa com qual foi
      */
     public SearchSession buscarEspecies(String termo, int tamanhoPagina, EstrategiaDeBusca estrategia) {
         if (estrategia == null) {
@@ -120,8 +108,7 @@ public class FachadaBiodiversidade {
     }
 
     /**
-     * RF6: agrupa espécies de qualquer categoria por status de conservação,
-     * sem lógica específica de subtipo (delegado ao ConservationReport).
+     * RF6: agrupa espécies de qualquer categoria por status de conservação, sem lógica específica de subtipo (delegado ao ConservationReport).
      */
     public Map<ConservationStatus, List<Species>> agruparPorStatus(List<Species> especies) {
         return ConservationReport.agruparPorStatus(especies);

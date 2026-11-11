@@ -5,8 +5,7 @@ import model.ConservationStatus;
 import model.Species;
 
 /**
- * Criador concreto (Factory Method) dos anfíbios, classe taxonômica
- * "Amphibia". Os "-" são o marcador de "dado ainda desconhecido".
+ * Criador concreto (Factory Method) dos anfíbios, classe taxonomica "Amphibia". Os "-" são o marcador de "dado ainda desconhecido".
  */
 public class CriadorDeAnfibio extends CriadorDeEspecie {
 
