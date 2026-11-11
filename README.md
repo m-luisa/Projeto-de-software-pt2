@@ -1,3 +1,791 @@
+# Explorador de Biodiversidade (GBIF + Wikidata)
+
+Projeto da disciplina **Projeto de Software** (UFAL). Programa de console em **Java 21** que consulta a base pública **GBIF** (espécies, status de conservação IUCN e ocorrências) e completa os dados com o **Wikidata** (habitat, dieta, tamanho, massa). O usuário busca por nome popular (ex.: onça-pintada) ou científico (ex.: Panthera onca), vê os detalhes da espécie, lista ocorrências com data e coordenadas e gera um relatório de conservação a partir de um *levantamento* nomeado.
+
+## Como compilar e executar
+
+```bash
+javac -d out $(find src -name '*.java')
+java -cp out Main
+```
+
+É preciso ter acesso à internet (GBIF e Wikidata). Menu do programa:
+
+| Opção | O que faz | Onde |
+|---|---|---|
+| 1 | Consulta geral: busca, escolhe uma espécie, mostra os detalhes e, se quiser, as ocorrências | `Main.consultaGeral` |
+| 2 | Listar ocorrências de todas as espécies que casam com um nome | `Main.listarOcorrenciasPorNome` |
+| 3 | Relatório de conservação com levantamento nomeado | `Main.relatorioConservacaoPorNome` |
+| 4 | Escolher o método de busca (automático, nome popular ou nome científico) | `Main.escolherMetodoDeBusca` |
+| 0 | Sair | `Main.main` |
+
+## Estrutura de pacotes
+
+| Pacote | Conteúdo |
+|---|---|
+| `model` | `Species` (abstrata) e 10 subclasses, `ConservationStatus`, `Occurrence` (com `Builder`), `Levantamento`, `ConservationReport`, `SearchResult` |
+| `factory` | `CriadorDeEspecie`, os 10 criadores concretos e a `SpeciesFactory` |
+| `api` | `SpeciesDataSource`, `GBIFApiClient`, `DecoradorDeFonteDeEspecies`, `EnrichedSpeciesDataSource`, `WikiDataClient`, `SearchSession`/`GBIFSearchSession`, `ImportResult` |
+| `busca` | `EstrategiaDeBusca`, `BuscaPorNomePopular`, `BuscaPorNomeCientifico` |
+| `facade` | `FachadaBiodiversidade` |
+| `ui` | `NavegadorDeResultados`, `SelecionadorDeUmaEspecie`, `SelecionadorDeVariasEspecies`, `EspecieSelecionada` |
+| (raiz) | `Main`: menus e impressão; único lugar que instancia as classes concretas |
+
+## Requisitos funcionais e onde estão no código
+
+| RF | O que o sistema faz | Onde |
+|---|---|---|
+| RF1 | Espécie só existe com nome científico válido e status não nulo | `Species` (construtor); `GBIFApiClient.fetchSpecies` devolve `null` se faltar nome ou classe |
+| RF2 | Ocorrência nunca guarda valores impossíveis (data futura, latitude fora de -90..90, longitude fora de -180..180, NaN, sem espécie, sem coordenadas); datas impossíveis são recusadas | `Occurrence` (construtor privado + `Builder.build`); `GBIFApiClient.parseData` (formato estrito) |
+| RF3 | Status IUCN normalizado para um enum e traduzido para português; sem dado vira `NOT_EVALUATED` | `ConservationStatus.normalizeAPI` e `emPortugues`; `CriadorDeEspecie.criarDaAPI` |
+| RF4 | Categorias de organismos (9 categorias mais a genérica), cada uma com seu criador | Subclasses de `Species` em `model`; mapa em `SpeciesFactory` |
+| RF5 | Cada categoria se descreve com seus campos próprios (envergadura em aves e insetos, ciclo de atividade em mamíferos, época de floração e bioma em plantas) | `Species.describeHabitat()` e `describeCommonTraits()`; implementação em cada subclasse |
+| RF6 [P] | Relatório agnóstico a tipo: agrupa por status sem `instanceof` nem `switch` por subtipo | `ConservationReport.agruparPorStatus`; `FachadaBiodiversidade.agruparPorStatus` |
+| RF7 [A][IF] | O programa depende só da interface `SpeciesDataSource`; a paginação (busca e ocorrências) fica escondida | `SpeciesDataSource`; `SearchSession`/`GBIFSearchSession`; `GBIFApiClient.fetchOcorrencias` |
+| RF8 [C] | Levantamento nomeado com total, contagem por status e categoria mais comum | `Levantamento`; `Species.getCategoria()`; uso em `Main.relatorioConservacaoPorNome` |
+| RF9 | Registro de ocorrência malformado é descartado, contado e justificado, e o lote continua | `GBIFApiClient.importarOcorrencias`; `ImportResult` (`descartados` e `motivosDescarte`) |
+| RF10 [A] | Métodos de busca selecionáveis de forma independente | pacote `busca` (Strategy); `FachadaBiodiversidade.buscarEspecies`; opção 4 do `Main` |
+
+## Padrões de projeto: visão geral
+
+| Tipo | Padrão | Onde |
+|---|---|---|
+| Criacional | Factory Method | `factory/CriadorDeEspecie` e `CriadorDe*`, escolhidos pela `SpeciesFactory` |
+| Criacional | Builder | `Occurrence.Builder`, usado em `GBIFApiClient.importarOcorrencias` |
+| Estrutural | Facade | `facade/FachadaBiodiversidade` |
+| Estrutural | Decorator | `DecoradorDeFonteDeEspecies` e `EnrichedSpeciesDataSource` |
+| Comportamental | Strategy | `busca/EstrategiaDeBusca` e as duas estratégias; contexto: `FachadaBiodiversidade` |
+| Comportamental | Template Method | `ui/NavegadorDeResultados.executar()` e os dois seletores |
+
+**Não aplicados:** Abstract Factory, Prototype e Singleton (criacionais); Adapter, Proxy e Composite (estruturais). O `GBIFApiClient` já implementa `SpeciesDataSource` diretamente, então não há interface incompatível para adaptar; a `GBIFSearchSession` tem cache de páginas, mas não substitui outro objeto; e o `Levantamento` é apenas uma coleção de espécies, sem elementos e grupos tratados de forma uniforme. Dentro de `Species` e `CriadorDeEspecie` também aparece, de forma informal, o Template Method (`describeCommonTraits` chama o gancho `rotuloHabitat`; `criarDaAPI` chama o método de fábrica `criar`).
+
+**Observação.** `EnrichedSpeciesDataSource.enrich` recria a espécie com `new` direto, sem passar pela fábrica, porque precisa construí-la já com os dados do Wikidata.
+
+## Padrões de projeto: onde foram aplicados e por quê
+
+Esta seção detalha cada padrão usado: **o que ele é**, **onde está no código** (arquivo e linhas, com o trecho real copiado do repositório) e **por que foi aplicado**. As seções mais abaixo ("Padrões Criacionais/Estruturais/Comportamentais aplicados") mostram o raciocínio de antes e depois de cada mudança.
+
+### 1. Factory Method (criacional)
+
+**O que é.** Uma classe base declara um método de fábrica abstrato e cada subclasse decide qual objeto concreto devolver. Quem usa a fábrica não escreve `new` das classes concretas.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Creator | `CriadorDeEspecie` (método de fábrica `criar`) | `factory/CriadorDeEspecie.java` |
+| Concrete Creators | `CriadorDeAve`, `CriadorDeMamifero`, `CriadorDePlanta`, `CriadorDeInseto`, `CriadorDeAnfibio`, `CriadorDeReptil`, `CriadorDePeixe`, `CriadorDeMolusco`, `CriadorDeCrustaceo`, `CriadorDeEspecieGenerica` | `factory/CriadorDe*.java` |
+| Product | `Species` e suas subclasses (`Bird`, `Mammal`, ...) | `model/*.java` |
+| Quem escolhe o criador | `SpeciesFactory` (mapa classe taxonômica para criador) | `factory/SpeciesFactory.java` |
+| Cliente | `GBIFApiClient.fetchSpecies` | `api/GBIFApiClient.java` |
+
+**Onde está.**
+
+1. O Creator abstrato, com o método de fábrica `criar` e o passo comum `criarDaAPI` (normaliza o status, RF3):
+
+```java
+// factory/CriadorDeEspecie.java, linhas 6-14
+public abstract class CriadorDeEspecie {
+
+    protected abstract Species criar(int id, String nome, ConservationStatus status);
+
+    public Species criarDaAPI(int id, String nome, String statusBruto) {
+        ConservationStatus status = ConservationStatus.normalizeAPI(statusBruto);
+        return criar(id, nome, status);
+    }
+}
+```
+
+2. Um criador concreto: só sabe criar uma categoria. Os `"-"` são o marcador interno de "dado ainda desconhecido", que o `EnrichedSpeciesDataSource` troca pelos valores do Wikidata:
+
+```java
+// factory/CriadorDeAve.java, linhas 14-20
+public class CriadorDeAve extends CriadorDeEspecie {
+
+    @Override
+    protected Species criar(int id, String nome, ConservationStatus status) {
+        return new Bird(id, nome, status, "-", "-", "-", "-", "-");
+    }
+}
+```
+
+3. A `SpeciesFactory` escolhe o criador pela classe taxonômica que o GBIF devolve ("Aves", "Mammalia", ...). Se a classe não está no mapa, usa o criador genérico:
+
+```java
+// factory/SpeciesFactory.java, linhas 10-32
+private static final Map<String, CriadorDeEspecie> CRIADORES = Map.of(
+        "Aves", new CriadorDeAve(),
+        "Magnoliopsida", new CriadorDePlanta(),
+        "Mammalia", new CriadorDeMamifero(),
+        "Amphibia", new CriadorDeAnfibio(),
+        "Reptilia", new CriadorDeReptil(),
+        "Insecta", new CriadorDeInseto(),
+        "Actinopterygii", new CriadorDePeixe(),
+        "Gastropoda", new CriadorDeMolusco(),
+        "Malacostraca", new CriadorDeCrustaceo()
+);
+
+public static Species createFromAPI(int id, String name, String taxonomicClass, String rawStatus) {
+
+    if (taxonomicClass == null) {
+        taxonomicClass = "Desconhecida";
+    }
+
+    CriadorDeEspecie criador = CRIADORES.getOrDefault(
+            taxonomicClass, new CriadorDeEspecieGenerica(taxonomicClass));
+
+    return criador.criarDaAPI(id, name, rawStatus);
+}
+```
+
+4. O uso: o cliente só pede a espécie, sem saber qual subclasse será criada:
+
+```java
+// api/GBIFApiClient.java, linhas 67-69
+String rawStatus = fetchConservationStatus(speciesId);
+
+return SpeciesFactory.createFromAPI(speciesId, name, taxonomicClass, rawStatus);
+```
+
+**Por que foi aplicado.** Antes, a `SpeciesFactory` tinha um `switch` com um `case` e um `new` por categoria, e cada categoria nova obrigava a editar esse `switch`. Com o Factory Method, uma categoria nova é uma subclasse de `Species`, um criador novo e uma linha no mapa `CRIADORES`; nada do que já existe é alterado (RF4 e RF6). O passo comum (normalizar o status) fica em um lugar só, em `criarDaAPI`. **Custo:** são 10 classes pequenas, o que só compensa por haver muitas variantes.
+
+> **Atenção.** `EnrichedSpeciesDataSource.enrich` (linhas 36-55) recria a espécie com `new Bird(...)`, `new Mammal(...)` etc. direto, sem usar a fábrica, porque precisa construí-la já com os dados do Wikidata.
+
+### 2. Builder (criacional)
+
+**O que é.** Em vez de um construtor com muitos parâmetros, o objeto é montado passo a passo com métodos de nome claro e só é criado no `build()`, já validado.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Product | `Occurrence` (construtor privado) | `model/Occurrence.java` |
+| Builder | `Occurrence.Builder` (classe aninhada) | `model/Occurrence.java` |
+| Cliente | `GBIFApiClient.importarOcorrencias` | `api/GBIFApiClient.java` |
+
+**Onde está.**
+
+1. O construtor é **privado** e recebe o Builder; é aqui que roda a validação do RF2:
+
+```java
+// model/Occurrence.java, linhas 12-21
+private Occurrence(Builder builder) {
+    setDate(builder.date);
+    setCoordinates(builder.latitude, builder.longitude);
+
+    if (builder.speciesRef == null) {
+        throw new IllegalArgumentException("Toda ocorrência deve estar associada a uma espécie válida.");
+    }
+    this.speciesRef = builder.speciesRef;
+    this.horarioConhecido = builder.horarioConhecido;
+}
+```
+
+2. A validação de cada campo (data no futuro, latitude e longitude fora do intervalo, NaN):
+
+```java
+// model/Occurrence.java, linhas 23-43
+private void setDate(Date d) {
+    if (d != null && d.after(new Date())) {
+        throw new IllegalArgumentException("A data da ocorrência não pode ser no futuro.");
+    }
+    this.date = d;
+}
+
+private void setCoordinates(double lat, double lon) {
+    if (Double.isNaN(lat) || Double.isNaN(lon)) {
+        throw new IllegalArgumentException("Coordenadas inválidas (NaN).");
+    }
+    if (lat < -90.0 || lat > 90.0) {
+        throw new IllegalArgumentException("Latitude inválida (" + lat + "). Deve estar entre -90 e 90.");
+    }
+    if (lon < -180.0 || lon > 180.0) {
+        throw new IllegalArgumentException("Longitude inválida (" + lon + "). Deve estar entre -180 e 180.");
+    }
+
+    this.latitude = lat;
+    this.longitude = lon;
+}
+```
+
+3. O Builder, com um método por campo, cada um devolvendo `this` para permitir o encadeamento, e o `build()` que exige as coordenadas:
+
+```java
+// model/Occurrence.java, linhas 55-89
+public static class Builder {
+    private Date date;
+    private Double latitude;   
+    private Double longitude;
+    private Species speciesRef;
+    private boolean horarioConhecido = true;
+
+    public Builder data(Date date) {
+        this.date = date;
+        return this; // devolve o próprio builder para permitir o encadeamento
+    }
+
+    public Builder coordenadas(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        return this;
+    }
+
+    public Builder especie(Species speciesRef) {
+        this.speciesRef = speciesRef;
+        return this;
+    }
+
+    public Builder horarioConhecido(boolean horarioConhecido) {
+        this.horarioConhecido = horarioConhecido;
+        return this;
+    }
+
+    public Occurrence build() {
+        if (latitude == null || longitude == null) {
+            throw new IllegalArgumentException("Ocorrência sem coordenadas.");
+        }
+        return new Occurrence(this);
+    }
+}
+```
+
+4. O uso na importação de ocorrências do GBIF:
+
+```java
+// api/GBIFApiClient.java, linhas 379-384
+Occurrence occ = new Occurrence.Builder()
+        .especie(especie)
+        .data(data)
+        .coordenadas(lat, lon)
+        .horarioConhecido(possuiHorario(dataStr))
+        .build();
+```
+
+**Por que foi aplicado.** O código antigo fazia `new Occurrence(data, lat, lon, especie)` e depois `occ.setHorarioConhecido(...)`. Eram dois problemas: dois `double` seguidos que o compilador não deixa distinguir (fácil trocar latitude por longitude) e um segundo passo que podia ser esquecido sem erro. Com o Builder, cada valor tem nome e, como o construtor é privado, **não existe `Occurrence` que não tenha passado pela validação** do RF2 (por exemplo, longitude 400 nunca é armazenada). Latitude e longitude são `Double` no Builder para distinguir "não informado" (`null`) de uma coordenada válida `0.0, 0.0`.
+
+**Onde não foi aplicado.** `Species` também tem construtor longo, mas só é construída dentro dos criadores e do enriquecimento (código interno), então um Builder ali traria código a mais sem ganho de legibilidade.
+
+### 3. Facade (estrutural)
+
+**O que é.** Uma classe "recepção" que oferece poucos métodos simples e esconde como as várias peças do subsistema trabalham juntas.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Facade | `FachadaBiodiversidade` | `facade/FachadaBiodiversidade.java` |
+| Subsistema escondido | `SpeciesDataSource`, `SearchSession`, `ImportResult`, `ConservationReport`, estratégias de busca | `api/`, `model/`, `busca/` |
+| Cliente | `Main` e os seletores da `ui` | `Main.java`, `ui/*.java` |
+
+**Onde está.**
+
+1. A fachada recebe só a **interface** da fonte de dados (RF7 [IF]) e valida os parâmetros:
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 26-50
+private final SpeciesDataSource fonte;
+
+// PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um
+// por vez, na ordem, e fica com o primeiro que achar resultado. A ordem
+// padrão é a mesma de antes do padrão: nome popular primeiro, depois o
+// científico.
+private final List<EstrategiaDeBusca> estrategias;
+
+// Construtor usado pelo Main: monta a ordem padrão (popular, científico).
+public FachadaBiodiversidade(SpeciesDataSource fonte) {
+    this(fonte, List.of(new BuscaPorNomePopular(), new BuscaPorNomeCientifico()));
+}
+
+// Construtor que permite escolher quais estratégias usar e em que ordem
+// (por exemplo, só a científica, ou uma nova estratégia criada depois).
+public FachadaBiodiversidade(SpeciesDataSource fonte, List<EstrategiaDeBusca> estrategias) {
+    if (fonte == null) {
+        throw new IllegalArgumentException("A fonte de dados não pode ser nula.");
+    }
+    if (estrategias == null || estrategias.isEmpty()) {
+        throw new IllegalArgumentException("É preciso informar pelo menos uma estratégia de busca.");
+    }
+    this.fonte = fonte;
+    this.estrategias = List.copyOf(estrategias);
+}
+```
+
+2. Métodos com nomes de intenção. Exemplo: a regra "tenta nome popular e, se não houver resultado, tenta o científico" existe só aqui. Antes estava escrita em três lugares do `Main`:
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 52-67
+/**
+ * Busca espécies tentando cada estratégia, na ordem, até uma achar
+ * resultado. Se nenhuma achar, devolve a sessão da última tentativa
+ * (que simplesmente responde hasResults() == false), igual ao
+ * comportamento de antes do padrão.
+ */
+public SearchSession buscarEspecies(String termo, int tamanhoPagina) {
+    SearchSession sessao = null;
+    for (EstrategiaDeBusca estrategia : estrategias) {
+        sessao = estrategia.buscar(fonte, termo, tamanhoPagina);
+        if (sessao.hasResults()) {
+            return sessao;
+        }
+    }
+    return sessao;
+}
+```
+
+3. Outros métodos que escondem passos do subsistema: percorrer todas as páginas, carregar a espécie, juntar as ocorrências de várias espécies e agrupar por status:
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 81-128
+public List<SearchResult> buscarTodasAsCorrespondencias(String termo) {
+    SearchSession sessao = buscarEspecies(termo, TAMANHO_PAGINA_LOTE);
+    List<SearchResult> todos = new ArrayList<>();
+
+    if (!sessao.hasResults()) {
+        return todos;
+    }
+
+    todos.addAll(sessao.currentPage());
+    while (sessao.nextPage()) {
+        todos.addAll(sessao.currentPage());
+    }
+    return todos;
+}
+
+public Species obterEspecie(int chave) {
+    return fonte.fetchSpecies(chave);
+}
+
+public ImportResult ocorrenciasDaEspecie(Species especie) {
+    return fonte.fetchOcorrencias(especie);
+}
+
+public ImportResult ocorrenciasDasCorrespondencias(List<SearchResult> correspondencias) {
+    ImportResult agregado = new ImportResult();
+
+    for (SearchResult correspondencia : correspondencias) {
+        Species especie = fonte.fetchSpeciesSemEnriquecimento(correspondencia.getKey());
+        if (especie == null) {
+            continue; // não conseguiu carregar esta espécie: segue para a próxima
+        }
+
+        ImportResult parcial = ocorrenciasDaEspecie(especie);
+        agregado.ocorrencias.addAll(parcial.ocorrencias);
+        agregado.descartados += parcial.descartados;
+        agregado.motivosDescarte.addAll(parcial.motivosDescarte);
+    }
+
+    return agregado;
+}
+
+/**
+ * RF6: agrupa espécies de qualquer categoria por status de conservação,
+ * sem lógica específica de subtipo (delegado ao ConservationReport).
+ */
+public Map<ConservationStatus, List<Species>> agruparPorStatus(List<Species> especies) {
+    return ConservationReport.agruparPorStatus(especies);
+}
+```
+
+4. O `Main` é o único lugar que monta as classes concretas e entrega a fonte à fachada; daí para baixo ele só conversa com ela:
+
+```java
+// Main.java, linhas 47-51
+SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+
+// O Main é o único lugar que instancia as classes concretas; daqui
+// para baixo ele só conversa com a fachada.
+FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
+```
+
+**Por que foi aplicado.** O `Main` misturava interface com o usuário e orquestração: combinava à mão a busca, a paginação, as ocorrências e o relatório. Com a fachada, o `Main` só pergunta ao usuário, chama um método e imprime. O ganho concreto: a regra de fallback agora muda em **um lugar só**, e o `Main` deixa de saber como as peças do subsistema se combinam. **Custo:** uma classe e um nível de indireção a mais; a fachada não bloqueia o acesso às demais classes.
+
+### 4. Decorator (estrutural)
+
+**O que é.** Um "embrulho" que implementa a mesma interface do objeto de dentro, repassa as chamadas e acrescenta um comportamento em apenas alguns métodos, sem alterar a classe original.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Component | `SpeciesDataSource` (interface) | `api/SpeciesDataSource.java` |
+| Concrete Component | `GBIFApiClient` | `api/GBIFApiClient.java` |
+| Decorator | `DecoradorDeFonteDeEspecies` (implementa a interface **e** guarda outra `SpeciesDataSource`) | `api/DecoradorDeFonteDeEspecies.java` |
+| Concrete Decorator | `EnrichedSpeciesDataSource` | `api/EnrichedSpeciesDataSource.java` |
+
+**Onde está.**
+
+1. O decorador abstrato guarda a fonte "de dentro" e repassa todos os métodos:
+
+```java
+// api/DecoradorDeFonteDeEspecies.java, linhas 5-45
+public abstract class DecoradorDeFonteDeEspecies implements SpeciesDataSource {
+
+    // A fonte "de dentro" (pode ser o GBIFApiClient ou outro decorador).
+    // protected para as subclasses poderem chamá-la quando precisarem.
+    protected final SpeciesDataSource fonte;
+
+    protected DecoradorDeFonteDeEspecies(SpeciesDataSource fonte) {
+        if (fonte == null) {
+            throw new IllegalArgumentException("A fonte decorada não pode ser nula.");
+        }
+        this.fonte = fonte;
+    }
+
+    // Todos os métodos abaixo apenas repassam a chamada para a fonte de
+    // dentro. Os decoradores concretos sobrescrevem só o que querem mudar.
+
+    @Override
+    public Species fetchSpecies(int speciesId) {
+        return fonte.fetchSpecies(speciesId);
+    }
+
+    @Override
+    public Species fetchSpeciesSemEnriquecimento(int speciesId) {
+        return fonte.fetchSpeciesSemEnriquecimento(speciesId);
+    }
+
+    @Override
+    public SearchSession searchByVernacular(String termo, int pageSize) {
+        return fonte.searchByVernacular(termo, pageSize);
+    }
+
+    @Override
+    public SearchSession searchByScientific(String termo, int pageSize) {
+        return fonte.searchByScientific(termo, pageSize);
+    }
+
+    @Override
+    public ImportResult fetchOcorrencias(Species especie) {
+        return fonte.fetchOcorrencias(especie);
+    }
+}
+```
+
+2. O decorador concreto sobrescreve **só** `fetchSpecies`, o único método cujo resultado muda: pega a espécie básica da fonte de dentro e completa com os dados do Wikidata:
+
+```java
+// api/EnrichedSpeciesDataSource.java, linhas 5-24
+public class EnrichedSpeciesDataSource extends DecoradorDeFonteDeEspecies {
+
+    private final WikiDataClient wikidata;
+
+    // A assinatura do construtor foi mantida: o primeiro parâmetro continua
+    // sendo a fonte base (GBIF), agora guardada pela classe pai em "fonte".
+    public EnrichedSpeciesDataSource(SpeciesDataSource gbif, WikiDataClient wikidata) {
+        super(gbif);
+        this.wikidata = wikidata;
+    }
+
+    @Override
+    public Species fetchSpecies(int speciesId) {
+        Species base = fonte.fetchSpecies(speciesId);
+        if (base == null) {
+            return null;
+        }
+        WikiDataTraits traits = wikidata.fetchTraits(base.getScientificName());
+        return enrich(base, traits);
+    }
+```
+
+3. A montagem, no `Main`. Como o decorador também é um `SpeciesDataSource`, o resto do programa não percebe a diferença:
+
+```java
+// Main.java, linhas 47-47
+SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
+```
+
+**Por que foi aplicado.** Buscar traits no Wikidata é uma responsabilidade extra que não deveria ficar dentro do cliente do GBIF. O Decorator acrescenta esse comportamento sem mexer no `GBIFApiClient` nem em quem usa a interface. Os demais métodos (buscas, ocorrências, `fetchSpeciesSemEnriquecimento`) são herdados e só repassam a chamada: por isso `fetchSpeciesSemEnriquecimento` **não** consulta o Wikidata, e a fachada o usa (`FachadaBiodiversidade.java`, linha 108) para listar ocorrências sem chamadas de rede lentas. **Custo:** hoje existe um único decorador concreto; a classe base compensa de fato quando surgir um segundo (por exemplo, um que registre logs ou guarde respostas em cache).
+
+### 5. Strategy (comportamental)
+
+**O que é.** Vários jeitos de fazer a mesma coisa, cada um em uma classe com a mesma interface, de modo que quem usa pode escolher ou trocar o jeito sem mudar o próprio código.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Strategy | `EstrategiaDeBusca` (interface) | `busca/EstrategiaDeBusca.java` |
+| Concrete Strategies | `BuscaPorNomePopular`, `BuscaPorNomeCientifico` | `busca/*.java` |
+| Context | `FachadaBiodiversidade` (guarda a lista ordenada de estratégias) | `facade/FachadaBiodiversidade.java` |
+| Quem escolhe | menu opção 4 do `Main` | `Main.java` |
+
+**Onde está.**
+
+1. A interface e as duas estratégias concretas:
+
+```java
+// busca/EstrategiaDeBusca.java, linhas 19-30
+public interface EstrategiaDeBusca {
+
+    /**
+     * Inicia a busca e devolve a sessão paginada (a paginação continua
+     * escondida dentro da SearchSession, como pede o RF7).
+     *
+     * @param fonte         de onde os dados vêm (só a interface, nunca o GBIF direto)
+     * @param termo         o que o usuário digitou
+     * @param tamanhoPagina quantos resultados por página
+     */
+    SearchSession buscar(SpeciesDataSource fonte, String termo, int tamanhoPagina);
+}
+```
+
+```java
+// busca/BuscaPorNomePopular.java, linhas 9-15
+public class BuscaPorNomePopular implements EstrategiaDeBusca {
+
+    @Override
+    public SearchSession buscar(SpeciesDataSource fonte, String termo, int tamanhoPagina) {
+        return fonte.searchByVernacular(termo, tamanhoPagina);
+    }
+}
+```
+
+```java
+// busca/BuscaPorNomeCientifico.java, linhas 10-16
+public class BuscaPorNomeCientifico implements EstrategiaDeBusca {
+
+    @Override
+    public SearchSession buscar(SpeciesDataSource fonte, String termo, int tamanhoPagina) {
+        return fonte.searchByScientific(termo, tamanhoPagina);
+    }
+}
+```
+
+2. O contexto: a fachada guarda a lista ordenada de estratégias (a ordem padrão é popular, depois científica) e, no modo automático, tenta uma por vez até alguma achar resultado:
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 28-37
+// PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um
+// por vez, na ordem, e fica com o primeiro que achar resultado. A ordem
+// padrão é a mesma de antes do padrão: nome popular primeiro, depois o
+// científico.
+private final List<EstrategiaDeBusca> estrategias;
+
+// Construtor usado pelo Main: monta a ordem padrão (popular, científico).
+public FachadaBiodiversidade(SpeciesDataSource fonte) {
+    this(fonte, List.of(new BuscaPorNomePopular(), new BuscaPorNomeCientifico()));
+}
+```
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 58-67
+public SearchSession buscarEspecies(String termo, int tamanhoPagina) {
+    SearchSession sessao = null;
+    for (EstrategiaDeBusca estrategia : estrategias) {
+        sessao = estrategia.buscar(fonte, termo, tamanhoPagina);
+        if (sessao.hasResults()) {
+            return sessao;
+        }
+    }
+    return sessao;
+}
+```
+
+3. A escolha **independente** de uma única estratégia, sem fallback (RF10):
+
+```java
+// facade/FachadaBiodiversidade.java, linhas 74-79
+public SearchSession buscarEspecies(String termo, int tamanhoPagina, EstrategiaDeBusca estrategia) {
+    if (estrategia == null) {
+        throw new IllegalArgumentException("A estratégia de busca não pode ser nula.");
+    }
+    return estrategia.buscar(fonte, termo, tamanhoPagina);
+}
+```
+
+4. O usuário escolhe o método pelo menu (opção 4): o `Main` só troca a lista de estratégias da fachada, e o resto do programa não sabe qual está em uso:
+
+```java
+// Main.java, linhas 138-151
+switch (escolha) {
+    case "1":
+        System.out.println("Busca automática ativada.\n");
+        return new FachadaBiodiversidade(fonte);
+    case "2":
+        System.out.println("Busca por nome popular ativada.\n");
+        return new FachadaBiodiversidade(fonte, List.of(new BuscaPorNomePopular()));
+    case "3":
+        System.out.println("Busca por nome científico ativada.\n");
+        return new FachadaBiodiversidade(fonte, List.of(new BuscaPorNomeCientifico()));
+    default:
+        System.out.println("Opção inválida. O método de busca não foi alterado.\n");
+        return atual;
+}
+```
+
+**Por que foi aplicado.** O RF10 pede pelo menos dois métodos de busca selecionáveis de forma independente. Antes, a função `buscarEspecies` tinha a regra "popular e depois científico" fixa num `if`, e ninguém conseguia pedir só a busca científica. Com o Strategy, um método novo de busca (por exemplo, pela chave do GBIF) é uma **classe nova**, sem editar as existentes nem a fachada. O modo automático mantém a mesma ordem de antes. **Custo:** três arquivos pequenos.
+
+### 6. Template Method (comportamental)
+
+**O que é.** A classe base define o **esqueleto fixo** de um algoritmo em um método `final` e deixa alguns passos abstratos (os "ganchos") para as subclasses preencherem. A ordem dos passos não muda; só o conteúdo de cada gancho.
+
+| Papel | Classe | Arquivo |
+|---|---|---|
+| Classe abstrata + método-template | `NavegadorDeResultados<T>.executar()` | `ui/NavegadorDeResultados.java` |
+| Ganchos | `valorQuandoNaoHaResultado`, `textoDoPedidoDeEscolha`, `aoPressionarZero`, `tratarEscolha` | `ui/NavegadorDeResultados.java` |
+| Subclasse 1 | `SelecionadorDeUmaEspecie` (escolhe uma espécie) | `ui/SelecionadorDeUmaEspecie.java` |
+| Subclasse 2 | `SelecionadorDeVariasEspecies` (escolhe várias, ex.: `1,3,5`) | `ui/SelecionadorDeVariasEspecies.java` |
+
+**Onde está.**
+
+1. O esqueleto. O método é `final` para que as subclasses não mudem a ordem dos passos. Os passos comuns (pedir o termo, buscar, navegar com `[N]` e `[P]`) ficam aqui, e os dois pontos que variam chamam os ganchos:
+
+```java
+// ui/NavegadorDeResultados.java, linhas 45-92
+// ------------------------------------------------------------------
+// TEMPLATE METHOD: o esqueleto fixo. É final de propósito.
+// ------------------------------------------------------------------
+public final T executar() {
+    System.out.print("\nDigite o nome (comum ou científico) da espécie: ");
+    String termo = entrada.nextLine().trim();
+
+    if (termo.isEmpty()) {
+        System.out.println("Termo de busca não pode ser vazio.\n");
+        return valorQuandoNaoHaResultado();
+    }
+
+    System.out.println("Buscando \"" + termo + "\" na base do GBIF...");
+
+    // RF7 [A]: quem controla a paginação é a SearchSession, não esta classe.
+    // [N] só busca página nova na API se o usuário realmente avançar;
+    // [P] nunca busca nada, só volta no cache da sessão.
+    SearchSession sessao = fachada.buscarEspecies(termo, tamanhoPagina);
+
+    if (!sessao.hasResults()) {
+        System.out.println("Nenhum resultado encontrado para \"" + termo + "\".\n");
+        return valorQuandoNaoHaResultado();
+    }
+
+    while (!concluido) {
+        List<SearchResult> pagina = sessao.currentPage();
+        exibirPagina(pagina, sessao.pageIndex() * tamanhoPagina);
+        System.out.print(textoDoPedidoDeEscolha());
+        String escolha = entrada.nextLine().trim();
+
+        // Passos comuns às duas variações: navegar entre páginas.
+        if (escolha.equalsIgnoreCase("N")) {
+            if (!sessao.nextPage()) {
+                System.out.println("Não há mais resultados.\n");
+            }
+        } else if (escolha.equalsIgnoreCase("P")) {
+            if (!sessao.previousPage()) {
+                System.out.println("Você já está na primeira página.\n");
+            }
+        } else if (escolha.equals("0")) {
+            aoPressionarZero();            // gancho 1
+        } else {
+            tratarEscolha(escolha, pagina); // gancho 2
+        }
+    }
+
+    return resultado;
+}
+```
+
+2. Os ganchos, declarados como métodos abstratos:
+
+```java
+// ui/NavegadorDeResultados.java, linhas 98-112
+/** Valor devolvido quando o termo é vazio ou a busca não acha nada. */
+protected abstract T valorQuandoNaoHaResultado();
+
+/** Texto mostrado ao pedir a escolha do usuário. */
+protected abstract String textoDoPedidoDeEscolha();
+
+/** O que fazer quando o usuário digita [0]. Deve chamar concluir(...). */
+protected abstract void aoPressionarZero();
+
+/**
+ * O que fazer com qualquer outra escolha (um número, vários números...).
+ * Chama concluir(...) quando terminou; se a escolha foi inválida, só
+ * avisa o usuário e retorna (a navegação continua).
+ */
+protected abstract void tratarEscolha(String escolha, List<SearchResult> paginaAtual);
+```
+
+3. Uma das variações: só preenche os ganchos (aqui, para escolher **uma** espécie):
+
+```java
+// ui/SelecionadorDeUmaEspecie.java, linhas 20-54
+@Override
+protected Species valorQuandoNaoHaResultado() {
+    return null; // quem chamou entende null como "nenhuma espécie escolhida"
+}
+
+@Override
+protected String textoDoPedidoDeEscolha() {
+    return "\nDigite o número do resultado, [N] próxima página, "
+            + "[P] página anterior ou [0] cancelar: ";
+}
+
+@Override
+protected void aoPressionarZero() {
+    System.out.println("Busca cancelada.\n");
+    concluir(null);
+}
+
+@Override
+protected void tratarEscolha(String escolha, List<SearchResult> paginaAtual) {
+    int indice;
+    try {
+        indice = Integer.parseInt(escolha);
+    } catch (NumberFormatException e) {
+        System.out.println("Opção inválida.\n");
+        return;
+    }
+
+    if (indice < 1 || indice > paginaAtual.size()) {
+        System.out.println("Opção inválida.\n");
+        return;
+    }
+
+    SearchResult selecionado = paginaAtual.get(indice - 1);
+    concluir(fachada().obterEspecie(selecionado.getKey()));
+}
+```
+
+4. O uso no `Main`: a consulta geral usa a variação de uma espécie e o relatório usa a de várias:
+
+```java
+// Main.java, linhas 380-380
+Species especie = new SelecionadorDeUmaEspecie(scanner, fachada, PAGINA).executar();
+```
+
+```java
+// Main.java, linhas 226-226
+List<EspecieSelecionada> novas = new SelecionadorDeVariasEspecies(scanner, fachada, PAGINA).executar();
+```
+
+**Por que foi aplicado.** O `Main` tinha duas funções de cerca de 70 linhas, `resolverEspecie` e `resolverEspecies`, com o mesmo esqueleto copiado e diferindo só em dois passos (o que fazer com `[0]` e com o número digitado). As cópias já tinham começado a divergir (por exemplo, só uma imprimia "Busca cancelada."). Agora o esqueleto existe uma única vez, uma correção na navegação é feita em um lugar só, e as duas variações não podem mais divergir sem querer. **Custo:** a ordem dos passos é fixa, e `SelecionadorDeVariasEspecies` guarda as espécies escolhidas dentro do objeto, por isso o `Main` cria um objeto novo a cada rodada.
+
+### Outros usos informais de padrões
+
+Estes não foram declarados como padrão da atividade, mas aparecem no código e podem ser perguntados:
+
+- **Template Method dentro de `Species`:** `describeCommonTraits()` monta os campos comuns e chama o gancho `rotuloHabitat()`, que `Plant` sobrescreve para mostrar "Bioma" em vez de "Habitat":
+
+```java
+// model/Species.java, linhas 55-67
+/** Rótulo do campo de habitat; categorias podem usar um termo mais apropriado (ex.: "Bioma"). */
+protected String rotuloHabitat() {
+    return "Habitat";
+}
+
+protected String describeCommonTraits() {
+    StringBuilder sb = new StringBuilder();
+    appendCampo(sb, rotuloHabitat(), habitat);
+    appendCampo(sb, "Hábitos alimentares", diet);
+    appendCampo(sb, "Comprimento", length);
+    appendCampo(sb, "Massa", mass);
+    return sb.toString();
+}
+```
+
+```java
+// model/Plant.java, linhas 11-15
+// Para plantas, o "habitat" é descrito como bioma.
+@Override
+protected String rotuloHabitat() {
+    return "Bioma";
+}
+```
+
+- **Template Method dentro do Factory Method:** `CriadorDeEspecie.criarDaAPI` (passo comum) chama o método de fábrica abstrato `criar` (passo que varia). Veja o trecho do padrão 1.
+
+- **Semelhante a Iterator:** `SearchSession` (`currentPage`, `nextPage`, `previousPage`) funciona como um cursor paginado, com cache das páginas já visitadas e busca na API só quando se avança para uma página nova (`api/GBIFSearchSession.java`).
+
+---
+
 # Diagramas de Classes
 
 ## 1. Modelo de domínio (`model` e `factory`)
@@ -38,15 +826,19 @@ classDiagram
         +getLength() String
         +getMass() String
         #appendCampo(sb: StringBuilder, rotulo: String, valor: String)$ void
+        #rotuloHabitat() String
         #describeCommonTraits() String
         +describeHabitat()* String
         +getCategoria()* String
     }
 
     class Bird {
+        -wingspan : String
         +describeHabitat() String
     }
     class Plant {
+        -floweringPeriod : String
+        #rotuloHabitat() String
         +describeHabitat() String
     }
     class Mammal {
@@ -85,9 +877,9 @@ classDiagram
         -longitude : double
         -speciesRef : Species
         -horarioConhecido : boolean
-        +setDate(d: Date) void
-        +setCoordinates(lat: double, lon: double) void
-        +setHorarioConhecido(horarioConhecido: boolean) void
+        -setDate(d: Date) void
+        -setCoordinates(lat: double, lon: double) void
+        -setHorarioConhecido(horarioConhecido: boolean) void
         +getDate() Date
         +getLatitude() double
         +getLongitude() double
@@ -194,8 +986,7 @@ classDiagram
         +fetchSpeciesSemEnriquecimento(speciesId: int) Species
         +searchByVernacular(termo: String, pageSize: int) SearchSession
         +searchByScientific(termo: String, pageSize: int) SearchSession
-        +fetchRawOccurrencesByScientificName(scientificName: String, limit: int) List~String~
-        +importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
+        +fetchOcorrencias(especie: Species) ImportResult
     }
 
     class SearchSession {
@@ -215,8 +1006,9 @@ classDiagram
         +fetchSpeciesSemEnriquecimento(speciesId: int) Species
         +searchByVernacular(termo: String, pageSize: int) SearchSession
         +searchByScientific(termo: String, pageSize: int) SearchSession
-        +fetchRawOccurrencesByScientificName(scientificName: String, limit: int) List~String~
-        +importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
+        +fetchOcorrencias(especie: Species) ImportResult
+        -fetchPaginaOcorrencias(scientificName: String, offset: int) String
+        -importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
     }
 
     class DecoradorDeFonteDeEspecies {
@@ -227,8 +1019,7 @@ classDiagram
         +fetchSpeciesSemEnriquecimento(speciesId: int) Species
         +searchByVernacular(termo: String, pageSize: int) SearchSession
         +searchByScientific(termo: String, pageSize: int) SearchSession
-        +fetchRawOccurrencesByScientificName(scientificName: String, limit: int) List~String~
-        +importarOcorrencias(jsonsBrutos: List~String~, especie: Species) ImportResult
+        +fetchOcorrencias(especie: Species) ImportResult
     }
 
     class EnrichedSpeciesDataSource {
@@ -268,6 +1059,7 @@ classDiagram
 
     class ImportResult {
         +ocorrencias : List~Occurrence~
+        +motivosDescarte : List~String~
         +descartados : int
     }
 
@@ -470,7 +1262,7 @@ FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
 | Decorator | `DecoradorDeFonteDeEspecies` (implementa a interface **e** guarda outra `SpeciesDataSource`) |
 | ConcreteDecorator | `EnrichedSpeciesDataSource` |
 
-**Antes.** `EnrichedSpeciesDataSource` já implementava `SpeciesDataSource` e guardava um `gbif`, ou seja, já era um decorador na prática. Mas não havia classe base: ele escrevia à mão `searchByVernacular`, `searchByScientific`, `fetchRawOccurrencesByScientificName`, `importarOcorrencias` e `fetchSpeciesSemEnriquecimento`, que só repassavam a chamada.
+**Antes.** `EnrichedSpeciesDataSource` já implementava `SpeciesDataSource` e guardava um `gbif`, ou seja, já era um decorador na prática. Mas não havia classe base: ele escrevia à mão `searchByVernacular`, `searchByScientific`, `fetchOcorrencias` e `fetchSpeciesSemEnriquecimento`, que só repassavam a chamada.
 
 **Agora.** `DecoradorDeFonteDeEspecies` concentra o repasse de todos os métodos para a fonte "de dentro". `EnrichedSpeciesDataSource` herda dela e sobrescreve apenas `fetchSpecies`, o único método cujo resultado muda (busca os traits no Wikidata e reconstrói a espécie). `fetchSpeciesSemEnriquecimento` passou a ser herdado: ele pede à fonte de dentro a versão sem enriquecimento (antes chamava `gbif.fetchSpecies`). Para o `GBIFApiClient` o resultado é o mesmo, e a nova forma continua correta se houver outro decorador no meio da pilha. O construtor manteve a mesma assinatura, então o `Main` não precisou mudar:
 
@@ -507,7 +1299,7 @@ Atividade: identificar funções do código que podem ser corrigidas com padrõe
 
 **Por quê.** O RF10 pede pelo menos dois métodos de identificação, selecionáveis independentemente, e que o código que exibe o resultado não saiba qual foi usado. Strategy é o padrão para uma família de algoritmos intercambiáveis atrás de uma interface. Pesquisar "Panthera onca" e "onça-pintada" devolve a mesma espécie pelos dois caminhos, e um método novo (por exemplo, busca pela chave do GBIF) é uma classe nova, sem editar as existentes nem a fachada.
 
-**Custo.** Três arquivos pequenos. Hoje o menu do `Main` ainda usa só a ordem padrão: a escolha independente do método está disponível na fachada, mas não foi criada uma opção de menu para isso.
+**Custo.** Três arquivos pequenos. A escolha independente do método está disponível na fachada e no menu: a opção **4** do `Main` (`escolherMetodoDeBusca`) cria a fachada com a lista de estratégias escolhida (automático, só nome popular ou só nome científico).
 
 **Requisitos funcionais preservados.** O contrato `SpeciesDataSource` não mudou. Para o mesmo termo, a ordem de tentativa e o resultado são os mesmos de antes, inclusive o caso sem resultados (sessão vazia, sem erro). A paginação continua escondida na `SearchSession` (RF7).
 
@@ -522,7 +1314,7 @@ Atividade: identificar funções do código que podem ser corrigidas com padrõe
 
 A impressão da lista de resultados (antes `Main.exibirResultados`) foi para a classe base. No `Main`, `consultaGeral` usa `new SelecionadorDeUmaEspecie(scanner, fachada, PAGINA).executar()` e o relatório usa `new SelecionadorDeVariasEspecies(...).executar()`.
 
-**Por quê.** Template Method serve para quando vários fluxos compartilham a mesma sequência de passos e diferem em poucos pontos. Agora uma correção na navegação (mensagem do `[P]`, comportamento do `[N]`) é feita em um lugar só, e as duas variações não podem mais divergir sem querer. Entre a ligação do `Main` com a fachada e este padrão, o `Main.java` foi de 597 para 352 linhas e ficou só com menus e impressão.
+**Por quê.** Template Method serve para quando vários fluxos compartilham a mesma sequência de passos e diferem em poucos pontos. Agora uma correção na navegação (mensagem do `[P]`, comportamento do `[N]`) é feita em um lugar só, e as duas variações não podem mais divergir sem querer. Entre a ligação do `Main` com a fachada e este padrão, o `Main.java` foi de 597 para 352 linhas e ficou só com menus e impressão (hoje tem 400 linhas, depois do RF8 e da opção 4 do menu).
 
 **Custo.** Quatro classes novas e uma herança. A ordem dos passos é fixa, então um fluxo futuro que precise de uma ordem diferente não se encaixa. O `SelecionadorDeVariasEspecies` guarda as espécies escolhidas dentro do objeto, por isso o `Main` cria um objeto novo a cada rodada.
 
