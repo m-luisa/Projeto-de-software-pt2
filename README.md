@@ -13,49 +13,49 @@ java -cp out Main
 
 | Opção | O que faz | Onde |
 |---|---|---|
-| 1 | Consulta geral: busca, escolhe uma espécie, mostra os detalhes e, se quiser, as ocorrências | `Main.consultaGeral` |
-| 2 | Listar ocorrências de todas as espécies que casam com um nome | `Main.listarOcorrenciasPorNome` |
-| 3 | Relatório de conservação com levantamento nomeado | `Main.relatorioConservacaoPorNome` |
-| 4 | Escolher o método de busca (automático, nome popular ou nome científico) | `Main.escolherMetodoDeBusca` |
-| 0 | Sair | `Main.main` |
+| 1 | Consulta geral: busca, escolhe uma espécie, mostra os detalhes e, se quiser, as ocorrências | [`Main.consultaGeral`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L60) |
+| 2 | Listar ocorrências de todas as espécies que casam com um nome | [`Main.listarOcorrenciasPorNome`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L63) |
+| 3 | Relatório de conservação com levantamento nomeado | [`Main.relatorioConservacaoPorNome`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L66) |
+| 4 | Escolher o método de busca (automático, nome popular ou nome científico) | [`Main.escolherMetodoDeBusca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L129) |
+| 0 | Sair | [`Main.main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L35) |
 
 ## Estrutura de pacotes
 
 | Pacote | Conteúdo |
 |---|---|
-| `model` | `Species` (abstrata) e 10 subclasses, `ConservationStatus`, `Occurrence` (com `Builder`), `Levantamento`, `ConservationReport`, `SearchResult` |
-| `factory` | `CriadorDeEspecie`, os 10 criadores concretos e a `SpeciesFactory` |
-| `api` | `SpeciesDataSource`, `GBIFApiClient`, `DecoradorDeFonteDeEspecies`, `EnrichedSpeciesDataSource`, `WikiDataClient`, `SearchSession`/`GBIFSearchSession`, `ImportResult` |
-| `busca` | `EstrategiaDeBusca`, `BuscaPorNomePopular`, `BuscaPorNomeCientifico` |
-| `facade` | `FachadaBiodiversidade` |
-| `ui` | `NavegadorDeResultados`, `SelecionadorDeUmaEspecie`, `SelecionadorDeVariasEspecies`, `EspecieSelecionada` |
-| (raiz) | `Main`: menus e impressão; único lugar que instancia as classes concretas |
+| [`model`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/) | [`Species`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java) (abstrata) e 10 subclasses, [`ConservationStatus`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/ConservationStatus.java), [`Occurrence`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) (com `Builder`), [`Levantamento`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Levantamento.java), [`ConservationReport`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/ConservationReport.java), [`SearchResult`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/SearchResult.java) |
+| [`factory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/) | [`CriadorDeEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java), os 10 criadores concretos e a [`SpeciesFactory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) |
+| [`api`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/) | [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java), [`GBIFApiClient`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java), [`DecoradorDeFonteDeEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java), [`EnrichedSpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java), [`WikiDataClient`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/WikiDataClient.java), [`SearchSession`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SearchSession.java)/[`GBIFSearchSession`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFSearchSession.java), [`ImportResult`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/ImportResult.java) |
+| [`busca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/) | [`EstrategiaDeBusca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java), [`BuscaPorNomePopular`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomePopular.java), [`BuscaPorNomeCientifico`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomeCientifico.java) |
+| [`facade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/) | [`FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) |
+| [`ui`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/) | [`NavegadorDeResultados`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java), [`SelecionadorDeUmaEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeUmaEspecie.java), [`SelecionadorDeVariasEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeVariasEspecies.java), [`EspecieSelecionada`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/EspecieSelecionada.java) |
+| (raiz) | [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java): menus e impressão; único lugar que instancia as classes concretas |
 
 ## Requisitos funcionais e onde estão no código
 
 | RF | O que o sistema faz | Onde |
 |---|---|---|
-| RF1 | Espécie só existe com nome científico válido e status não nulo | `Species` (construtor); `GBIFApiClient.fetchSpecies` devolve `null` se faltar nome ou classe |
-| RF2 | Ocorrência nunca guarda valores impossíveis (data futura, latitude fora de -90..90, longitude fora de -180..180, NaN, sem espécie, sem coordenadas); datas impossíveis são recusadas | `Occurrence` (construtor privado + `Builder.build`); `GBIFApiClient.parseData` (formato estrito) |
-| RF3 | Status IUCN normalizado para um enum e traduzido para português; sem dado vira `NOT_EVALUATED` | `ConservationStatus.normalizeAPI` e `emPortugues`; `CriadorDeEspecie.criarDaAPI` |
-| RF4 | Categorias de organismos (9 categorias mais a genérica), cada uma com seu criador | Subclasses de `Species` em `model`; mapa em `SpeciesFactory` |
-| RF5 | Cada categoria se descreve com seus campos próprios (envergadura em aves e insetos, ciclo de atividade em mamíferos, época de floração e bioma em plantas) | `Species.describeHabitat()` e `describeCommonTraits()`; implementação em cada subclasse |
-| RF6 [P] | Relatório agnóstico a tipo: agrupa por status sem `instanceof` nem `switch` por subtipo | `ConservationReport.agruparPorStatus`; `FachadaBiodiversidade.agruparPorStatus` |
-| RF7 [A][IF] | O programa depende só da interface `SpeciesDataSource`; a paginação (busca e ocorrências) fica escondida | `SpeciesDataSource`; `SearchSession`/`GBIFSearchSession`; `GBIFApiClient.fetchOcorrencias` |
-| RF8 [C] | Levantamento nomeado com total, contagem por status e categoria mais comum | `Levantamento`; `Species.getCategoria()`; uso em `Main.relatorioConservacaoPorNome` |
-| RF9 | Registro de ocorrência malformado é descartado, contado e justificado, e o lote continua | `GBIFApiClient.importarOcorrencias`; `ImportResult` (`descartados` e `motivosDescarte`) |
-| RF10 [A] | Métodos de busca selecionáveis de forma independente | pacote `busca` (Strategy); `FachadaBiodiversidade.buscarEspecies`; opção 4 do `Main` |
+| RF1 | Espécie só existe com nome científico válido e status não nulo | [`Species`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java) (construtor); [`GBIFApiClient.fetchSpecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L36) devolve `null` se faltar nome ou classe |
+| RF2 | Ocorrência nunca guarda valores impossíveis (data futura, latitude fora de -90..90, longitude fora de -180..180, NaN, sem espécie, sem coordenadas); datas impossíveis são recusadas | [`Occurrence`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) (construtor privado + `Builder.build`); [`GBIFApiClient.parseData`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L331) (formato estrito) |
+| RF3 | Status IUCN normalizado para um enum e traduzido para português; sem dado vira `NOT_EVALUATED` | [`ConservationStatus.normalizeAPI`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/ConservationStatus.java#L14) e `emPortugues`; [`CriadorDeEspecie.criarDaAPI`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java#L10) |
+| RF4 | Categorias de organismos (9 categorias mais a genérica), cada uma com seu criador | Subclasses de [`Species`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java) em `model`; mapa em [`SpeciesFactory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) |
+| RF5 | Cada categoria se descreve com seus campos próprios (envergadura em aves e insetos, ciclo de atividade em mamíferos, época de floração e bioma em plantas) | [`Species.describeHabitat()`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java#L69) e `describeCommonTraits()`; implementação em cada subclasse |
+| RF6 [P] | Relatório agnóstico a tipo: agrupa por status sem `instanceof` nem `switch` por subtipo | [`ConservationReport.agruparPorStatus`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/ConservationReport.java#L30); [`FachadaBiodiversidade.agruparPorStatus`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L126) |
+| RF7 [A][IF] | O programa depende só da interface [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java); a paginação (busca e ocorrências) fica escondida | [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java); [`SearchSession`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SearchSession.java)/[`GBIFSearchSession`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFSearchSession.java); [`GBIFApiClient.fetchOcorrencias`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L109) |
+| RF8 [C] | Levantamento nomeado com total, contagem por status e categoria mais comum | [`Levantamento`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Levantamento.java); [`Species.getCategoria()`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java#L77); uso em [`Main.relatorioConservacaoPorNome`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L66) |
+| RF9 | Registro de ocorrência malformado é descartado, contado e justificado, e o lote continua | [`GBIFApiClient.importarOcorrencias`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L362); [`ImportResult`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/ImportResult.java) (`descartados` e `motivosDescarte`) |
+| RF10 [A] | Métodos de busca selecionáveis de forma independente | pacote `busca` (Strategy); [`FachadaBiodiversidade.buscarEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L58); opção 4 do [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) |
 
 ## Padrões de projeto: visão geral
 
 | Tipo | Padrão | Onde |
 |---|---|---|
-| Criacional | Factory Method | `factory/CriadorDeEspecie` e `CriadorDe*`, escolhidos pela `SpeciesFactory` |
-| Criacional | Builder | `Occurrence.Builder`, usado em `GBIFApiClient.importarOcorrencias` |
-| Estrutural | Facade | `facade/FachadaBiodiversidade` |
-| Estrutural | Decorator | `DecoradorDeFonteDeEspecies` e `EnrichedSpeciesDataSource` |
-| Comportamental | Strategy | `busca/EstrategiaDeBusca` e as duas estratégias; contexto: `FachadaBiodiversidade` |
-| Comportamental | Template Method | `ui/NavegadorDeResultados.executar()` e os dois seletores |
+| Criacional | Factory Method | [`factory/CriadorDeEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java) e [`CriadorDe*`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/), escolhidos pela [`SpeciesFactory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) |
+| Criacional | Builder | [`Occurrence.Builder`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java), usado em [`GBIFApiClient.importarOcorrencias`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L362) |
+| Estrutural | Facade | [`facade/FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) |
+| Estrutural | Decorator | [`DecoradorDeFonteDeEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java) e [`EnrichedSpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java) |
+| Comportamental | Strategy | [`busca/EstrategiaDeBusca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java) e as duas estratégias; contexto: [`FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) |
+| Comportamental | Template Method | [`ui/NavegadorDeResultados.executar()`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java#L48) e os dois seletores |
 
 **Não aplicados:** Abstract Factory, Prototype e Singleton (criacionais); Adapter, Proxy e Composite (estruturais). O `GBIFApiClient` já implementa `SpeciesDataSource` diretamente, então não há interface incompatível para adaptar; a `GBIFSearchSession` tem cache de páginas, mas não substitui outro objeto; e o `Levantamento` é apenas uma coleção de espécies, sem elementos e grupos tratados de forma uniforme. Dentro de `Species` e `CriadorDeEspecie` também aparece, de forma informal, o Template Method (`describeCommonTraits` chama o gancho `rotuloHabitat`; `criarDaAPI` chama o método de fábrica `criar`).
 
@@ -71,15 +71,17 @@ Esta seção detalha cada padrão usado: **o que ele é**, **onde está no códi
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Creator | `CriadorDeEspecie` (método de fábrica `criar`) | `factory/CriadorDeEspecie.java` |
-| Concrete Creators | `CriadorDeAve`, `CriadorDeMamifero`, `CriadorDePlanta`, `CriadorDeInseto`, `CriadorDeAnfibio`, `CriadorDeReptil`, `CriadorDePeixe`, `CriadorDeMolusco`, `CriadorDeCrustaceo`, `CriadorDeEspecieGenerica` | `factory/CriadorDe*.java` |
-| Product | `Species` e suas subclasses (`Bird`, `Mammal`, ...) | `model/*.java` |
-| Quem escolhe o criador | `SpeciesFactory` (mapa classe taxonômica para criador) | `factory/SpeciesFactory.java` |
-| Cliente | `GBIFApiClient.fetchSpecies` | `api/GBIFApiClient.java` |
+| Creator | [`CriadorDeEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java) (método de fábrica `criar`) | [`factory/CriadorDeEspecie.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java) |
+| Concrete Creators | [`CriadorDeAve`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeAve.java), [`CriadorDeMamifero`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeMamifero.java), [`CriadorDePlanta`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDePlanta.java), [`CriadorDeInseto`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeInseto.java), [`CriadorDeAnfibio`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeAnfibio.java), [`CriadorDeReptil`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeReptil.java), [`CriadorDePeixe`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDePeixe.java), [`CriadorDeMolusco`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeMolusco.java), [`CriadorDeCrustaceo`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeCrustaceo.java), [`CriadorDeEspecieGenerica`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecieGenerica.java) | [`factory/CriadorDe*.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/) |
+| Product | [`Species`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java) e suas subclasses ([`Bird`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Bird.java), [`Mammal`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Mammal.java), ...) | [`model/*.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/) |
+| Quem escolhe o criador | [`SpeciesFactory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) (mapa classe taxonômica para criador) | [`factory/SpeciesFactory.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) |
+| Cliente | [`GBIFApiClient.fetchSpecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L36) | [`api/GBIFApiClient.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java) |
 
 **Onde está.**
 
 1. O Creator abstrato, com o método de fábrica `criar` e o passo comum `criarDaAPI` (normaliza o status, RF3):
+
+**Arquivo:** [`factory/CriadorDeEspecie.java, linhas 6-14`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java#L6-L14)
 
 ```java
 // factory/CriadorDeEspecie.java, linhas 6-14
@@ -96,6 +98,8 @@ public abstract class CriadorDeEspecie {
 
 2. Um criador concreto: só sabe criar uma categoria. Os `"-"` são o marcador interno de "dado ainda desconhecido", que o `EnrichedSpeciesDataSource` troca pelos valores do Wikidata:
 
+**Arquivo:** [`factory/CriadorDeAve.java, linhas 14-20`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeAve.java#L14-L20)
+
 ```java
 // factory/CriadorDeAve.java, linhas 14-20
 public class CriadorDeAve extends CriadorDeEspecie {
@@ -108,6 +112,8 @@ public class CriadorDeAve extends CriadorDeEspecie {
 ```
 
 3. A `SpeciesFactory` escolhe o criador pela classe taxonômica que o GBIF devolve ("Aves", "Mammalia", ...). Se a classe não está no mapa, usa o criador genérico:
+
+**Arquivo:** [`factory/SpeciesFactory.java, linhas 10-32`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java#L10-L32)
 
 ```java
 // factory/SpeciesFactory.java, linhas 10-32
@@ -138,6 +144,8 @@ public static Species createFromAPI(int id, String name, String taxonomicClass, 
 
 4. O uso: o cliente só pede a espécie, sem saber qual subclasse será criada:
 
+**Arquivo:** [`api/GBIFApiClient.java, linhas 67-69`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L67-L69)
+
 ```java
 // api/GBIFApiClient.java, linhas 67-69
 String rawStatus = fetchConservationStatus(speciesId);
@@ -155,13 +163,15 @@ return SpeciesFactory.createFromAPI(speciesId, name, taxonomicClass, rawStatus);
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Product | `Occurrence` (construtor privado) | `model/Occurrence.java` |
-| Builder | `Occurrence.Builder` (classe aninhada) | `model/Occurrence.java` |
-| Cliente | `GBIFApiClient.importarOcorrencias` | `api/GBIFApiClient.java` |
+| Product | [`Occurrence`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) (construtor privado) | [`model/Occurrence.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) |
+| Builder | [`Occurrence.Builder`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) (classe aninhada) | [`model/Occurrence.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java) |
+| Cliente | [`GBIFApiClient.importarOcorrencias`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L362) | [`api/GBIFApiClient.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java) |
 
 **Onde está.**
 
 1. O construtor é **privado** e recebe o Builder; é aqui que roda a validação do RF2:
+
+**Arquivo:** [`model/Occurrence.java, linhas 12-21`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java#L12-L21)
 
 ```java
 // model/Occurrence.java, linhas 12-21
@@ -178,6 +188,8 @@ private Occurrence(Builder builder) {
 ```
 
 2. A validação de cada campo (data no futuro, latitude e longitude fora do intervalo, NaN):
+
+**Arquivo:** [`model/Occurrence.java, linhas 23-43`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java#L23-L43)
 
 ```java
 // model/Occurrence.java, linhas 23-43
@@ -205,6 +217,8 @@ private void setCoordinates(double lat, double lon) {
 ```
 
 3. O Builder, com um método por campo, cada um devolvendo `this` para permitir o encadeamento, e o `build()` que exige as coordenadas:
+
+**Arquivo:** [`model/Occurrence.java, linhas 55-89`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java#L55-L89)
 
 ```java
 // model/Occurrence.java, linhas 55-89
@@ -247,6 +261,8 @@ public static class Builder {
 
 4. O uso na importação de ocorrências do GBIF:
 
+**Arquivo:** [`api/GBIFApiClient.java, linhas 379-384`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L379-L384)
+
 ```java
 // api/GBIFApiClient.java, linhas 379-384
 Occurrence occ = new Occurrence.Builder()
@@ -267,13 +283,15 @@ Occurrence occ = new Occurrence.Builder()
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Facade | `FachadaBiodiversidade` | `facade/FachadaBiodiversidade.java` |
-| Subsistema escondido | `SpeciesDataSource`, `SearchSession`, `ImportResult`, `ConservationReport`, estratégias de busca | `api/`, `model/`, `busca/` |
-| Cliente | `Main` e os seletores da `ui` | `Main.java`, `ui/*.java` |
+| Facade | [`FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) | [`facade/FachadaBiodiversidade.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) |
+| Subsistema escondido | [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java), [`SearchSession`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SearchSession.java), [`ImportResult`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/ImportResult.java), [`ConservationReport`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/ConservationReport.java), estratégias de busca | `api/`, `model/`, `busca/` |
+| Cliente | [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) e os seletores da `ui` | [`Main.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java), [`ui/*.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/) |
 
 **Onde está.**
 
 1. A fachada recebe só a **interface** da fonte de dados (RF7 [IF]) e valida os parâmetros:
+
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 26-50`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L26-L50)
 
 ```java
 // facade/FachadaBiodiversidade.java, linhas 26-50
@@ -306,6 +324,8 @@ public FachadaBiodiversidade(SpeciesDataSource fonte, List<EstrategiaDeBusca> es
 
 2. Métodos com nomes de intenção. Exemplo: a regra "tenta nome popular e, se não houver resultado, tenta o científico" existe só aqui. Antes estava escrita em três lugares do `Main`:
 
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 52-67`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L52-L67)
+
 ```java
 // facade/FachadaBiodiversidade.java, linhas 52-67
 /**
@@ -327,6 +347,8 @@ public SearchSession buscarEspecies(String termo, int tamanhoPagina) {
 ```
 
 3. Outros métodos que escondem passos do subsistema: percorrer todas as páginas, carregar a espécie, juntar as ocorrências de várias espécies e agrupar por status:
+
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 81-128`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L81-L128)
 
 ```java
 // facade/FachadaBiodiversidade.java, linhas 81-128
@@ -382,6 +404,8 @@ public Map<ConservationStatus, List<Species>> agruparPorStatus(List<Species> esp
 
 4. O `Main` é o único lugar que monta as classes concretas e entrega a fonte à fachada; daí para baixo ele só conversa com ela:
 
+**Arquivo:** [`Main.java, linhas 47-51`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L47-L51)
+
 ```java
 // Main.java, linhas 47-51
 SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
@@ -399,14 +423,16 @@ FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Component | `SpeciesDataSource` (interface) | `api/SpeciesDataSource.java` |
-| Concrete Component | `GBIFApiClient` | `api/GBIFApiClient.java` |
-| Decorator | `DecoradorDeFonteDeEspecies` (implementa a interface **e** guarda outra `SpeciesDataSource`) | `api/DecoradorDeFonteDeEspecies.java` |
-| Concrete Decorator | `EnrichedSpeciesDataSource` | `api/EnrichedSpeciesDataSource.java` |
+| Component | [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java) (interface) | [`api/SpeciesDataSource.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java) |
+| Concrete Component | [`GBIFApiClient`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java) | [`api/GBIFApiClient.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java) |
+| Decorator | [`DecoradorDeFonteDeEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java) (implementa a interface **e** guarda outra [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java)) | [`api/DecoradorDeFonteDeEspecies.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java) |
+| Concrete Decorator | [`EnrichedSpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java) | [`api/EnrichedSpeciesDataSource.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java) |
 
 **Onde está.**
 
 1. O decorador abstrato guarda a fonte "de dentro" e repassa todos os métodos:
+
+**Arquivo:** [`api/DecoradorDeFonteDeEspecies.java, linhas 5-45`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java#L5-L45)
 
 ```java
 // api/DecoradorDeFonteDeEspecies.java, linhas 5-45
@@ -455,6 +481,8 @@ public abstract class DecoradorDeFonteDeEspecies implements SpeciesDataSource {
 
 2. O decorador concreto sobrescreve **só** `fetchSpecies`, o único método cujo resultado muda: pega a espécie básica da fonte de dentro e completa com os dados do Wikidata:
 
+**Arquivo:** [`api/EnrichedSpeciesDataSource.java, linhas 5-24`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java#L5-L24)
+
 ```java
 // api/EnrichedSpeciesDataSource.java, linhas 5-24
 public class EnrichedSpeciesDataSource extends DecoradorDeFonteDeEspecies {
@@ -481,12 +509,14 @@ public class EnrichedSpeciesDataSource extends DecoradorDeFonteDeEspecies {
 
 3. A montagem, no `Main`. Como o decorador também é um `SpeciesDataSource`, o resto do programa não percebe a diferença:
 
+**Arquivo:** [`Main.java, linha 47`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L47)
+
 ```java
 // Main.java, linhas 47-47
 SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new WikiDataClient());
 ```
 
-**Por que foi aplicado.** Buscar traits no Wikidata é uma responsabilidade extra que não deveria ficar dentro do cliente do GBIF. O Decorator acrescenta esse comportamento sem mexer no `GBIFApiClient` nem em quem usa a interface. Os demais métodos (buscas, ocorrências, `fetchSpeciesSemEnriquecimento`) são herdados e só repassam a chamada: por isso `fetchSpeciesSemEnriquecimento` **não** consulta o Wikidata, e a fachada o usa (`FachadaBiodiversidade.java`, linha 108) para listar ocorrências sem chamadas de rede lentas. **Custo:** hoje existe um único decorador concreto; a classe base compensa de fato quando surgir um segundo (por exemplo, um que registre logs ou guarde respostas em cache).
+**Por que foi aplicado.** Buscar traits no Wikidata é uma responsabilidade extra que não deveria ficar dentro do cliente do GBIF. O Decorator acrescenta esse comportamento sem mexer no `GBIFApiClient` nem em quem usa a interface. Os demais métodos (buscas, ocorrências, `fetchSpeciesSemEnriquecimento`) são herdados e só repassam a chamada: por isso `fetchSpeciesSemEnriquecimento` **não** consulta o Wikidata, e a fachada o usa ([`FachadaBiodiversidade.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java), linha 108) para listar ocorrências sem chamadas de rede lentas. **Custo:** hoje existe um único decorador concreto; a classe base compensa de fato quando surgir um segundo (por exemplo, um que registre logs ou guarde respostas em cache).
 
 ### 5. Strategy (comportamental)
 
@@ -494,14 +524,16 @@ SpeciesDataSource fonte = new EnrichedSpeciesDataSource(new GBIFApiClient(), new
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Strategy | `EstrategiaDeBusca` (interface) | `busca/EstrategiaDeBusca.java` |
-| Concrete Strategies | `BuscaPorNomePopular`, `BuscaPorNomeCientifico` | `busca/*.java` |
-| Context | `FachadaBiodiversidade` (guarda a lista ordenada de estratégias) | `facade/FachadaBiodiversidade.java` |
-| Quem escolhe | menu opção 4 do `Main` | `Main.java` |
+| Strategy | [`EstrategiaDeBusca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java) (interface) | [`busca/EstrategiaDeBusca.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java) |
+| Concrete Strategies | [`BuscaPorNomePopular`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomePopular.java), [`BuscaPorNomeCientifico`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomeCientifico.java) | [`busca/*.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/) |
+| Context | [`FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) (guarda a lista ordenada de estratégias) | [`facade/FachadaBiodiversidade.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) |
+| Quem escolhe | menu opção 4 do [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) | [`Main.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) |
 
 **Onde está.**
 
 1. A interface e as duas estratégias concretas:
+
+**Arquivo:** [`busca/EstrategiaDeBusca.java, linhas 19-30`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java#L19-L30)
 
 ```java
 // busca/EstrategiaDeBusca.java, linhas 19-30
@@ -519,6 +551,8 @@ public interface EstrategiaDeBusca {
 }
 ```
 
+**Arquivo:** [`busca/BuscaPorNomePopular.java, linhas 9-15`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomePopular.java#L9-L15)
+
 ```java
 // busca/BuscaPorNomePopular.java, linhas 9-15
 public class BuscaPorNomePopular implements EstrategiaDeBusca {
@@ -529,6 +563,8 @@ public class BuscaPorNomePopular implements EstrategiaDeBusca {
     }
 }
 ```
+
+**Arquivo:** [`busca/BuscaPorNomeCientifico.java, linhas 10-16`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomeCientifico.java#L10-L16)
 
 ```java
 // busca/BuscaPorNomeCientifico.java, linhas 10-16
@@ -543,6 +579,8 @@ public class BuscaPorNomeCientifico implements EstrategiaDeBusca {
 
 2. O contexto: a fachada guarda a lista ordenada de estratégias (a ordem padrão é popular, depois científica) e, no modo automático, tenta uma por vez até alguma achar resultado:
 
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 28-37`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L28-L37)
+
 ```java
 // facade/FachadaBiodiversidade.java, linhas 28-37
 // PADRÃO STRATEGY: lista ORDENADA de jeitos de buscar. A fachada tenta um
@@ -556,6 +594,8 @@ public FachadaBiodiversidade(SpeciesDataSource fonte) {
     this(fonte, List.of(new BuscaPorNomePopular(), new BuscaPorNomeCientifico()));
 }
 ```
+
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 58-67`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L58-L67)
 
 ```java
 // facade/FachadaBiodiversidade.java, linhas 58-67
@@ -573,6 +613,8 @@ public SearchSession buscarEspecies(String termo, int tamanhoPagina) {
 
 3. A escolha **independente** de uma única estratégia, sem fallback (RF10):
 
+**Arquivo:** [`facade/FachadaBiodiversidade.java, linhas 74-79`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L74-L79)
+
 ```java
 // facade/FachadaBiodiversidade.java, linhas 74-79
 public SearchSession buscarEspecies(String termo, int tamanhoPagina, EstrategiaDeBusca estrategia) {
@@ -584,6 +626,8 @@ public SearchSession buscarEspecies(String termo, int tamanhoPagina, EstrategiaD
 ```
 
 4. O usuário escolhe o método pelo menu (opção 4): o `Main` só troca a lista de estratégias da fachada, e o resto do programa não sabe qual está em uso:
+
+**Arquivo:** [`Main.java, linhas 138-151`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L138-L151)
 
 ```java
 // Main.java, linhas 138-151
@@ -611,14 +655,16 @@ switch (escolha) {
 
 | Papel | Classe | Arquivo |
 |---|---|---|
-| Classe abstrata + método-template | `NavegadorDeResultados<T>.executar()` | `ui/NavegadorDeResultados.java` |
-| Ganchos | `valorQuandoNaoHaResultado`, `textoDoPedidoDeEscolha`, `aoPressionarZero`, `tratarEscolha` | `ui/NavegadorDeResultados.java` |
-| Subclasse 1 | `SelecionadorDeUmaEspecie` (escolhe uma espécie) | `ui/SelecionadorDeUmaEspecie.java` |
-| Subclasse 2 | `SelecionadorDeVariasEspecies` (escolhe várias, ex.: `1,3,5`) | `ui/SelecionadorDeVariasEspecies.java` |
+| Classe abstrata + método-template | `NavegadorDeResultados<T>.executar()` | [`ui/NavegadorDeResultados.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java) |
+| Ganchos | `valorQuandoNaoHaResultado`, `textoDoPedidoDeEscolha`, `aoPressionarZero`, `tratarEscolha` | [`ui/NavegadorDeResultados.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java) |
+| Subclasse 1 | [`SelecionadorDeUmaEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeUmaEspecie.java) (escolhe uma espécie) | [`ui/SelecionadorDeUmaEspecie.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeUmaEspecie.java) |
+| Subclasse 2 | [`SelecionadorDeVariasEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeVariasEspecies.java) (escolhe várias, ex.: `1,3,5`) | [`ui/SelecionadorDeVariasEspecies.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeVariasEspecies.java) |
 
 **Onde está.**
 
 1. O esqueleto. O método é `final` para que as subclasses não mudem a ordem dos passos. Os passos comuns (pedir o termo, buscar, navegar com `[N]` e `[P]`) ficam aqui, e os dois pontos que variam chamam os ganchos:
+
+**Arquivo:** [`ui/NavegadorDeResultados.java, linhas 45-92`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java#L45-L92)
 
 ```java
 // ui/NavegadorDeResultados.java, linhas 45-92
@@ -674,6 +720,8 @@ public final T executar() {
 
 2. Os ganchos, declarados como métodos abstratos:
 
+**Arquivo:** [`ui/NavegadorDeResultados.java, linhas 98-112`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java#L98-L112)
+
 ```java
 // ui/NavegadorDeResultados.java, linhas 98-112
 /** Valor devolvido quando o termo é vazio ou a busca não acha nada. */
@@ -694,6 +742,8 @@ protected abstract void tratarEscolha(String escolha, List<SearchResult> paginaA
 ```
 
 3. Uma das variações: só preenche os ganchos (aqui, para escolher **uma** espécie):
+
+**Arquivo:** [`ui/SelecionadorDeUmaEspecie.java, linhas 20-54`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeUmaEspecie.java#L20-L54)
 
 ```java
 // ui/SelecionadorDeUmaEspecie.java, linhas 20-54
@@ -736,10 +786,14 @@ protected void tratarEscolha(String escolha, List<SearchResult> paginaAtual) {
 
 4. O uso no `Main`: a consulta geral usa a variação de uma espécie e o relatório usa a de várias:
 
+**Arquivo:** [`Main.java, linha 380`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L380)
+
 ```java
 // Main.java, linhas 380-380
 Species especie = new SelecionadorDeUmaEspecie(scanner, fachada, PAGINA).executar();
 ```
+
+**Arquivo:** [`Main.java, linha 226`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java#L226)
 
 ```java
 // Main.java, linhas 226-226
@@ -753,6 +807,8 @@ List<EspecieSelecionada> novas = new SelecionadorDeVariasEspecies(scanner, facha
 Estes não foram declarados como padrão da atividade, mas aparecem no código e podem ser perguntados:
 
 - **Template Method dentro de `Species`:** `describeCommonTraits()` monta os campos comuns e chama o gancho `rotuloHabitat()`, que `Plant` sobrescreve para mostrar "Bioma" em vez de "Habitat":
+
+**Arquivo:** [`model/Species.java, linhas 55-67`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Species.java#L55-L67)
 
 ```java
 // model/Species.java, linhas 55-67
@@ -771,6 +827,8 @@ protected String describeCommonTraits() {
 }
 ```
 
+**Arquivo:** [`model/Plant.java, linhas 11-15`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Plant.java#L11-L15)
+
 ```java
 // model/Plant.java, linhas 11-15
 // Para plantas, o "habitat" é descrito como bioma.
@@ -782,7 +840,7 @@ protected String rotuloHabitat() {
 
 - **Template Method dentro do Factory Method:** `CriadorDeEspecie.criarDaAPI` (passo comum) chama o método de fábrica abstrato `criar` (passo que varia). Veja o trecho do padrão 1.
 
-- **Semelhante a Iterator:** `SearchSession` (`currentPage`, `nextPage`, `previousPage`) funciona como um cursor paginado, com cache das páginas já visitadas e busca na API só quando se avança para uma página nova (`api/GBIFSearchSession.java`).
+- **Semelhante a Iterator:** `SearchSession` (`currentPage`, `nextPage`, `previousPage`) funciona como um cursor paginado, com cache das páginas já visitadas e busca na API só quando se avança para uma página nova ([`api/GBIFSearchSession.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFSearchSession.java)).
 
 ---
 
@@ -1191,8 +1249,8 @@ Atividade: identificar onde padrões criacionais devem ser aplicados e aplicá-l
 
 | Padrão | Onde | Sinal de alerta que havia no código |
 |---|---|---|
-| Factory Method | `factory/CriadorDeEspecie` e `CriadorDe*`, usados por `SpeciesFactory` | `switch` escolhendo qual classe instanciar |
-| Builder | `Occurrence.Builder`, usado em `GBIFApiClient.importarOcorrencias` | Construtor com valores posicionais e criação em dois passos (construtor + setter) |
+| Factory Method | [`factory/CriadorDeEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/CriadorDeEspecie.java) e [`CriadorDe*`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/), usados por [`SpeciesFactory`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/factory/SpeciesFactory.java) | `switch` escolhendo qual classe instanciar |
+| Builder | [`Occurrence.Builder`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Occurrence.java), usado em [`GBIFApiClient.importarOcorrencias`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java#L362) | Construtor com valores posicionais e criação em dois passos (construtor + setter) |
 
 ## 1. Factory Method: criação de `Species`
 
@@ -1230,7 +1288,7 @@ Atividade: identificar onde padrões estruturais (Adapter, Decorator, Proxy, Fac
 
 | Onde | Sinal de alerta que havia no código |
 |---|---|
-| `facade/FachadaBiodiversidade`, usada pelo `Main` | O `Main` combinava à mão quatro peças do subsistema (busca, paginação, ocorrências, relatório); a regra "popular, senão científico" estava escrita três vezes |
+| [`facade/FachadaBiodiversidade`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java), usada pelo [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) | O [`Main`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) combinava à mão quatro peças do subsistema (busca, paginação, ocorrências, relatório); a regra "popular, senão científico" estava escrita três vezes |
 
 **Antes.** O `Main` misturava interface com o usuário (menus, impressão) e orquestração do subsistema. A regra "tenta o nome popular e, se não houver resultado, tenta o científico" aparecia em `resolverEspecie`, `resolverEspecies` e `listarOcorrenciasPorNome`. O fluxo "para cada espécie encontrada, buscar ocorrências brutas e converter" e o método `collectAllPages` também viviam no `Main`.
 
@@ -1253,14 +1311,14 @@ FachadaBiodiversidade fachada = new FachadaBiodiversidade(fonte);
 
 | Onde | Sinal de alerta que havia no código |
 |---|---|
-| `api/DecoradorDeFonteDeEspecies` (base) e `EnrichedSpeciesDataSource` | Já existia um "embrulho" de `SpeciesDataSource`, mas ele reescrevia à mão cinco métodos que só repassavam a chamada; um segundo embrulho repetiria tudo |
+| [`api/DecoradorDeFonteDeEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java) (base) e [`EnrichedSpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java) | Já existia um "embrulho" de [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java), mas ele reescrevia à mão cinco métodos que só repassavam a chamada; um segundo embrulho repetiria tudo |
 
 | Papel no padrão | Classe |
 |---|---|
-| Component | `SpeciesDataSource` |
-| ConcreteComponent | `GBIFApiClient` |
-| Decorator | `DecoradorDeFonteDeEspecies` (implementa a interface **e** guarda outra `SpeciesDataSource`) |
-| ConcreteDecorator | `EnrichedSpeciesDataSource` |
+| Component | [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java) |
+| ConcreteComponent | [`GBIFApiClient`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/GBIFApiClient.java) |
+| Decorator | [`DecoradorDeFonteDeEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/DecoradorDeFonteDeEspecies.java) (implementa a interface **e** guarda outra [`SpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/SpeciesDataSource.java)) |
+| ConcreteDecorator | [`EnrichedSpeciesDataSource`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/api/EnrichedSpeciesDataSource.java) |
 
 **Antes.** `EnrichedSpeciesDataSource` já implementava `SpeciesDataSource` e guardava um `gbif`, ou seja, já era um decorador na prática. Mas não havia classe base: ele escrevia à mão `searchByVernacular`, `searchByScientific`, `fetchOcorrencias` e `fetchSpeciesSemEnriquecimento`, que só repassavam a chamada.
 
@@ -1284,8 +1342,8 @@ Atividade: identificar funções do código que podem ser corrigidas com padrõe
 
 | Padrão | Função corrigida | Onde ficou | Sinal de alerta que havia no código |
 |---|---|---|---|
-| Strategy | `FachadaBiodiversidade.buscarEspecies` | `busca/EstrategiaDeBusca`, `BuscaPorNomePopular`, `BuscaPorNomeCientifico` | Regra "tenta nome popular e, se não achar, tenta o científico" escrita direto na função, sem como escolher um método de busca de forma independente (RF10) |
-| Template Method | `Main.resolverEspecie` e `Main.resolverEspecies` | `ui/NavegadorDeResultados`, `SelecionadorDeUmaEspecie`, `SelecionadorDeVariasEspecies` | Duas funções de cerca de 70 linhas com o mesmo esqueleto copiado, diferindo só em dois passos |
+| Strategy | [`FachadaBiodiversidade.buscarEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java#L58) | [`busca/EstrategiaDeBusca`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/EstrategiaDeBusca.java), [`BuscaPorNomePopular`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomePopular.java), [`BuscaPorNomeCientifico`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/busca/BuscaPorNomeCientifico.java) | Regra "tenta nome popular e, se não achar, tenta o científico" escrita direto na função, sem como escolher um método de busca de forma independente (RF10) |
+| Template Method | [`Main.resolverEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) e [`Main.resolverEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) | [`ui/NavegadorDeResultados`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/NavegadorDeResultados.java), [`SelecionadorDeUmaEspecie`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeUmaEspecie.java), [`SelecionadorDeVariasEspecies`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/ui/SelecionadorDeVariasEspecies.java) | Duas funções de cerca de 70 linhas com o mesmo esqueleto copiado, diferindo só em dois passos |
 
 ## 1. Strategy: método de busca da `FachadaBiodiversidade`
 
@@ -1314,7 +1372,7 @@ Atividade: identificar funções do código que podem ser corrigidas com padrõe
 
 A impressão da lista de resultados (antes `Main.exibirResultados`) foi para a classe base. No `Main`, `consultaGeral` usa `new SelecionadorDeUmaEspecie(scanner, fachada, PAGINA).executar()` e o relatório usa `new SelecionadorDeVariasEspecies(...).executar()`.
 
-**Por quê.** Template Method serve para quando vários fluxos compartilham a mesma sequência de passos e diferem em poucos pontos. Agora uma correção na navegação (mensagem do `[P]`, comportamento do `[N]`) é feita em um lugar só, e as duas variações não podem mais divergir sem querer. Entre a ligação do `Main` com a fachada e este padrão, o `Main.java` foi de 597 para 352 linhas e ficou só com menus e impressão (hoje tem 400 linhas, depois do RF8 e da opção 4 do menu).
+**Por quê.** Template Method serve para quando vários fluxos compartilham a mesma sequência de passos e diferem em poucos pontos. Agora uma correção na navegação (mensagem do `[P]`, comportamento do `[N]`) é feita em um lugar só, e as duas variações não podem mais divergir sem querer. Entre a ligação do `Main` com a fachada e este padrão, o [`Main.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/Main.java) foi de 597 para 352 linhas e ficou só com menus e impressão (hoje tem 400 linhas, depois do RF8 e da opção 4 do menu).
 
 **Custo.** Quatro classes novas e uma herança. A ordem dos passos é fixa, então um fluxo futuro que precise de uma ordem diferente não se encaixa. O `SelecionadorDeVariasEspecies` guarda as espécies escolhidas dentro do objeto, por isso o `Main` cria um objeto novo a cada rodada.
 
@@ -1323,7 +1381,7 @@ A impressão da lista de resultados (antes `Main.exibirResultados`) foi para a c
 ## Outras correções feitas junto
 
 - Os 10 criadores concretos do Factory Method (`CriadorDeAve`, `CriadorDeMamifero` e os demais, mais `CriadorDeEspecieGenerica`) estavam descritos neste README, mas não existiam no repositório, e por isso o projeto não compilava. Foram adicionados com os mesmos valores do `switch` original da fábrica.
-- `FachadaBiodiversidade.java` estava na raiz de `src/main/java` mas declarava `package facade;`. Foi movida para `src/main/java/facade/`.
+- [`FachadaBiodiversidade.java`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/facade/FachadaBiodiversidade.java) estava na raiz de `src/main/java` mas declarava `package facade;`. Foi movida para `src/main/java/facade/`.
 - O `Main` agora realmente usa a fachada, como a seção sobre Facade já descrevia.
 
 ---
@@ -1332,7 +1390,7 @@ A impressão da lista de resultados (antes `Main.exibirResultados`) foi para a c
 
 O RF8 [C] pede que organismos possam ser agrupados em um levantamento nomeado, com estatísticas agregadas. Até esta entrega isso não existia: a opção 3 do menu juntava espécies numa lista sem nome e mostrava só a contagem por status.
 
-**Agora.** A classe `model/Levantamento` guarda um nome e a lista de organismos (`Species`) e responde sobre o grupo todo:
+**Agora.** A classe [`model/Levantamento`](https://github.com/m-luisa/Projeto-de-software-pt2/blob/main/src/main/java/model/Levantamento.java) guarda um nome e a lista de organismos (`Species`) e responde sobre o grupo todo:
 
 | Método | O que devolve |
 |---|---|
